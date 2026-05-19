@@ -1,0 +1,27 @@
+% !TEX root = ../main.tex
+\chapter{Idriftsættelse og test}
+\label{ch:idrift}
+
+% Mål: ca. 2.5--3 sider.
+% Her kobles teori og praksis sammen -- det vigtigste kapitel ift. §4.
+
+\section{Software-opsætning}
+% Jetson + ROS~2 workspace. Konfiguration så kun arm\_left indlæses
+% (config\_folder\_path eller deaktivering af øvrige JSON-filer).
+% Start af slider\_control.launch.py.
+
+\section{Kalibrering af led}
+% Nulpunkt, angle\_software\_min/max, gear\_ratio. Hvorfor kalibrering
+% er nødvendig før regulering giver mening.
+
+\section{PID-tuning i praksis}
+% Udgangspunkt: gain\_P, gain\_I, gain\_D fra eksisterende config.
+% Observeret respons pr. led. Hvis justeret: hvilke ændringer og hvorfor.
+% Knyttes tilbage til PID-teorien i kap.~\ref{ch:teori}.
+
+\section{Funktionstest og målinger}
+% Repeterbarhed, range-of-motion pr. led, eventuelle målinger af
+% positionsfejl. Sammenhold med forventet opførsel.
+
+\section{Resultat}
+% Hvad armen kan / ikke kan ved aflevering.

@@ -1,0 +1,26 @@
+% !TEX root = ../main.tex
+\chapter{Teori og baggrund}
+\label{ch:teori}
+
+% Mål: ca. 2.5--3 sider. Skal vise "central anvendt teori" jf. studieordning §4.
+% Hold det stramt og relevant for ÉN arm -- ikke et generelt robotik-kursus.
+
+\section{Servostyring}
+% PWM/positionssignal, intern positionsregulator i servoen, hvorfor PID
+% (henvis til at config-filer indeholder gain_P, gain_I, gain_D pr. led).
+
+\section{PID-regulering}
+% Kort: P-, I-, D-leddenes rolle. Hvorfor det er nødvendigt for et led
+% med tyngdekraft, friktion og inerti.
+
+\section{Mekanik og moment}
+% Moment på skulder/albue ved fuld udstrækning. Simpel statisk beregning
+% (vægt af underarm + last x arm-længde) -> krav til servomoment.
+
+\section{3D-print som konstruktionsmateriale}
+% Anisotropi (lag-retning), kryb under last, slid i bevægelige dele,
+% tolerancer. Hvorfor det er relevant for et bevægeligt led.
+
+\section{Kommunikation: USB-serial og ROS~2}
+% UART/serial fra Jetson til ESP32 pr. servogruppe. Kort om ROS~2's
+% publish/subscribe-model (nok til at læseren forstår node-diagrammet senere).
