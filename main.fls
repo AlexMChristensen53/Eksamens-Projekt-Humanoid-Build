@@ -1,8 +1,8 @@
-PWD C:/Users/Alexc/Downloads/LaTeXTemplates_masters-doctoral-thesis_v2.5
+PWD c:/Users/Alexc/Downloads/LaTeXTemplates_masters-doctoral-thesis_v2.5
 INPUT c:/texlive/2026/texmf.cnf
 INPUT c:/texlive/2026/texmf-dist/web2c/texmf.cnf
 INPUT c:/texlive/2026/texmf-var/web2c/pdftex/pdflatex.fmt
-INPUT main.tex
+INPUT c:/Users/Alexc/Downloads/LaTeXTemplates_masters-doctoral-thesis_v2.5/main.tex
 OUTPUT main.log
 INPUT ./MastersDoctoralThesis.cls
 INPUT MastersDoctoralThesis.cls

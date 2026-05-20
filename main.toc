@@ -19,7 +19,7 @@
 \contentsline {subsection}{\numberline {3.2.2}Styreelektronik}{6}{subsection.21}%
 \contentsline {subsection}{\numberline {3.2.3}Mekanisk opbygning}{6}{subsection.22}%
 \contentsline {subsection}{\numberline {3.2.4}Signal- og effektkæde}{6}{subsection.23}%
-\contentsline {section}{\numberline {3.3}Eksisterende dokumentation og kildekode}{6}{section.24}%
+\contentsline {section}{\numberline {3.3}Eksisterende dokumentation og kildekode}{7}{section.24}%
 \contentsline {section}{\numberline {3.4}Begrundelse for valg af arm som delsystem}{7}{section.25}%
 \contentsline {chapter}{\numberline {4}Mekanisk fremstilling og samling}{8}{chapter.26}%
 \contentsline {section}{\numberline {4.1}Print-strategi}{8}{section.27}%
