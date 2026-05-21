@@ -1,0 +1,19 @@
+# LaTeX build artefakter
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.out
+*.toc
+*.synctex.gz
+*.run.xml
+*-blx.bib
+
+# Editor / OS
+.vscode/
+.DS_Store
+Thumbs.db
