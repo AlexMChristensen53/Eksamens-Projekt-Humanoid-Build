@@ -1,0 +1,164 @@
+% !TEX root = ../main.tex
+\chapter{Analyse af eksisterende system}
+\label{ch:analyse}
+
+Før den praktiske integrationsindsats kan beskrives, er det nødvendigt at
+forstå det system, der danner udgangspunkt for projektet. Dette kapitel
+gennemgår den oprindelige Wattson-robot på systemniveau, beskriver den
+arm, der udgør rapportens fokus, og redegør kort for den eksisterende
+dokumentation og softwarestack. Til sidst begrundes valget af armen som
+afgrænset delsystem.
+
+\section{Robotten som helhed}
+
+Wattson er en bipedal humanoid robot, hvor samtlige bærende mekaniske dele
+er fremstillet ved FDM-3D-print. Robotten består overordnet af følgende
+delsystemer:
+
+\begin{itemize}
+    \item To arme, hver med syv frihedsgrader (skulder, overarm, albue,
+          underarm og håndled)
+    \item To hænder med adskilte finger-led
+    \item Hoved med to frihedsgrader (pitch og yaw)
+    \item Torso, hofte og to ben med flere led pr.\ ben
+\end{itemize}
+
+Robotten styres af en enkelt indlejret computer (Jetson Orin Nano), som
+afvikler en eksisterende ROS~2 Humble-baseret softwarestack. Aktuatorerne
+er fordelt på flere dedikerede mikrocontrollere (ESP32), der hver styrer
+en logisk gruppe af servoer og kommunikerer med Jetsonen via USB-serial.
+Den oprindelige robot understøtter teleoperation via et VR-headset og et
+ZED-stereo\-kamera, men disse funktioner er ikke en del af rapportens scope
+(jf.\ kapitel~\ref{ch:indledning}).
+
+% TODO: indsæt et samlet block-diagram her -- robotten med alle delsystemer
+% og deres forbindelser til Jetsonen via ESP32-controllere.
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.9\textwidth]{Figures/robot-overview.pdf}
+%     \caption{Overordnet arkitektur for Wattson-robotten.}
+%     \label{fig:robot-overview}
+% \end{figure}
+
+\section{Arm-delsystemet}
+\label{sec:arm-delsystem}
+
+En arm er den enhed, der i rapporten behandles som selvstændigt delsystem.
+Armen består af syv aktive led, der tilsammen udgør en antropomorf
+kinematik: skulder (pitch, roll, yaw), albue (pitch), underarm (yaw) og
+håndled (pitch, roll).
+
+\subsection{Aktuatorer}
+
+De syv led i armen drives af Waveshare ST3215 \emph{seriebus-servoer}.
+Dette er en intelligent servotype med indbygget mikrocontroller, magnetisk
+positionsencoder og en intern PID-løkke, der lukker positionsreguleringen
+om sin egen aksel. Servoerne kommunikerer over en halv-duplex TTL-seriel
+bus, hvor flere servoer er forbundet i daisy-chain og adresseres ved et
+unikt ID (i denne arm er ID~1--7 anvendt).
+
+Den interne PID-løkke gør, at den overordnede styring kun behøver sende en
+ønsket position til hver servo; den lokale regulator i servoen sørger
+selv for at nå den. Reguleringsparametrene (proportional-, integral- og
+differentialled) er konfigurerbare pr.\ servo og indlæses fra en JSON-fil
+ved opstart, jf.\ afsnit~\ref{sec:doks-kode}.
+
+% TODO: kort tabel over servoerne -- ID, led-navn, gear-ratio, software-grænser
+% Værdierne kan trækkes direkte fra servo_arm_left_params.json.
+
+\subsection{Styreelektronik}
+
+Servoerne er ikke forbundet direkte til Jetsonen, men til en dedikeret
+ESP32-mikrocontroller, der fungerer som bus-master på den serielle
+servobus. ESP32'en er via USB forbundet til Jetsonen og fremstår dér som
+en virtuel COM-port (\texttt{/dev/ttyUSB\textit{x}}). I den fuldt opbyggede
+robot er der flere ESP32-controllere (én pr.\ logisk gruppe -- venstre arm
++ hoved, højre arm, hænder), men i den afgrænsede konfiguration anvendes
+kun den, der styrer den valgte arm.
+
+% TODO: kort beskrivelse af ESP32'ens firmware -- protokol mod Jetsonen.
+% Skal undersøges/afklares med Nicoline. Hvis tiden ikke rækker, kan det
+% beskrives på højt niveau: "ESP32'en oversætter beskeder fra ROS-noden
+% til ST3215-protokollen og videresender feedback den anden vej."
+
+\subsection{Mekanisk opbygning}
+
+De mekaniske led består af 3D-printede strukturdele, der monteres direkte
+på servoernes udgangsaksler. Belastningen i leddet bæres altså af både
+selve den printede del og af servoens lejer. Denne konstruktion er let og
+billig, men introducerer nogle særlige hensyn omkring styrke, stivhed og
+slid, som behandles i kapitel~\ref{ch:diskussion}.
+
+\subsection{Signal- og effektkæde}
+
+På et overordnet niveau ser signal- og effektkæden for én arm således ud:
+
+\begin{itemize}
+    \item \textbf{Signal:} Jetson Orin Nano $\rightarrow$ USB $\rightarrow$
+          ESP32 $\rightarrow$ TTL-serial bus $\rightarrow$ ST3215 ID~1--7.
+    \item \textbf{Effekt:} Strømforsyning $\rightarrow$ fordelingsskinne
+          $\rightarrow$ ST3215 ID~1--7 (nominel driftsspænding ca.\ 7,4\,V
+          % TODO: bekræft eksakt spænding mod den anvendte PSU
+          ).
+\end{itemize}
+
+% TODO: erstat ovenstående punktliste med et egentligt block-diagram.
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.9\textwidth]{Figures/arm-blokdiagram.pdf}
+%     \caption{Signal- og effektkæde for én arm.}
+%     \label{fig:arm-blokdiagram}
+% \end{figure}
+\clearpage
+\section{Eksisterende dokumentation og kildekode}
+\label{sec:doks-kode}
+
+Hele Wattson-projektet er offentligt tilgængeligt som et ROS~2-workspace
+på GitHub. Workspacet indeholder bl.a.\ pakker til servo-styring,
+teleoperation, kamera-integration og opstart af robotten. For rapportens
+formål er især følgende relevant:
+
+\begin{itemize}
+    \item \texttt{servos.launch.py} -- starter en
+          \texttt{wattson\_servo\_manager\_node}, der indlæser
+          servokonfigurationer fra en angiven mappe og opretter
+          ROS-topics for hver gruppe.
+    \item \texttt{slider\_control.launch.py} -- en GUI med skyderkontroller
+          pr.\ led. Velegnet til idriftsættelse, fordi den ikke kræver
+          VR-udstyr, kamera eller invers kinematik.
+    \item \texttt{servo\_arm\_left\_params.json} -- konfigurationsfil for
+          den venstre arms syv servoer. Indeholder for hvert led bl.a.\
+          servo-ID, gear-ratio, PID-gains (\texttt{gain\_P},
+          \texttt{gain\_I}, \texttt{gain\_D}), software-grænser og
+          udgangsposition.
+\end{itemize}
+
+Det er væsentligt, at konfigurationsfilen for en arm er selvstændig.
+Hver arm kan derfor i princippet køres uafhængigt af resten af robotten,
+hvilket er en forudsætning for det modulære arbejde i denne rapport.
+
+\section{Begrundelse for valg af arm som delsystem}
+
+Armen er valgt som afgrænset delsystem, fordi den i kompakt form
+indeholder alle de elementer, der karakteriserer Wattson-projektet som
+helhed:
+
+\begin{itemize}
+    \item En 3D-printet mekanisk struktur med flere bevægelige led
+          og dynamisk belastning.
+    \item Flere elektriske aktuatorer, der skal forsynes og styres
+          samtidigt.
+    \item En dedikeret mikrocontroller (ESP32), der skal idriftsættes
+          og kommunikere med en overordnet computer.
+    \item En reguleringsmæssig styring -- både den lokale PID-løkke i
+          hver servo og den overordnede positionskommando fra ROS.
+    \item En kommunikationskæde i flere niveauer (USB, TTL-serial,
+          servo-protokol).
+\end{itemize}
+
+\noindent Armen er samtidig stor nok til at give et meningsfuldt
+demonstrationsresultat, men lille nok til at kunne fuldføres og
+dokumenteres inden for projektets tidsramme. Dette delsystem danner
+udgangspunkt for de følgende kapitler om mekanisk fremstilling
+(kapitel~\ref{ch:mekanik}), elektrisk integration (kapitel~\ref{ch:el})
+og idriftsættelse (kapitel~\ref{ch:idrift}).
