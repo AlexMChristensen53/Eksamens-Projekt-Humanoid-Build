@@ -5,8 +5,74 @@
 % Mål: ca. 0.5--1 side.
 % Hvad er næste skridt -- ud over rapportens scope.
 
-% - Resterende arme, torso, hoved.
-% - Fuld teleoperation (VR / ZED-kamera) som det eksisterende system understøtter.
-% - Hvis robotten skal anvendes uden for et lab: kort bemærkning om
-%   relevante standarder (fx maskindirektiv, lavspænding) -- kun hvis naturligt.
-% - Hvad ville man designe anderledes hvis projektet startede forfra.
+Rapporten har behandlet integrationen af én arm. Dette kapitel skitserer de
+naturlige næste skridt for projektet og placerer arbejdet i forhold til den
+bredere anvendelse af humanoide robotter i automationssammenhæng.
+
+\section{Det videre arbejde på Wattson}
+
+Det mest umiddelbare næste skridt er at udvide integrationen til de øvrige
+delsystemer i robotten:
+\begin{itemize}
+    \item Den modsatte arm, torso, hofteparti og hoved, hvor den modulære
+          arkitektur fra arm-systemet kan genbruges direkte.
+    \item Idriftsættelse af den fulde teleoperation via VR-udstyr og
+          ZED-kamera, som den eksisterende softwarestak allerede understøtter,
+          men som ligger uden for nærværende projekts afgrænsning.
+    \item Koordineret to-arms-bevægelse, der introducerer afhængigheder på
+          tværs af busser og dermed nye krav til synkronisering og
+          sikkerhedslogik.
+\end{itemize}
+
+Disse skridt udvider robotten i bredden, men ikke væsentligt i kompleksitet
+pr.\ delsystem; de metoder, der er anvendt i denne rapport, bør være direkte
+anvendelige.
+
+\section{Fra prototype mod anvendelse}
+
+Hvis robotten på sigt skal forlade laboratoriet og anvendes i et reelt miljø,
+ændrer billedet sig væsentligt. Tre forhold trænger sig på:
+\begin{itemize}
+    \item \textbf{Holdbarhed.} En fuldt 3D-printet konstruktion er velegnet
+          til en prototype, men kryb, slid og temperaturfølsomhed (jf.\
+          kapitel~\ref{ch:diskussion}) gør den uegnet til vedvarende drift
+          uden et planlagt udskiftningsregime eller en delvis ombygning til
+          metal-komponenter i de mest belastede led.
+    \item \textbf{Sikkerhed.} I et laboratorium opererer robotten i et
+          indhegnet område. I et anlæg med mennesker omkring sig vil
+          maskindirektivet og standarder for samarbejdende robotter
+          (eksempelvis ISO/TS~15066) stille krav til kraftbegrænsning,
+          nødstop og risikoanalyse, der ligger ud over det, en hobby-klasse
+          servo-bus understøtter direkte.
+    \item \textbf{Pålidelighed under last.} De begrænsninger ved de valgte
+          servoer, der er identificeret i kapitel~\ref{ch:diskussion} --
+          manglende detaljeret telemetri og hobby-klassens belastningsgrænser
+          -- skal håndteres, før robotten kan udføre opgaver uden konstant
+          tilsyn.
+\end{itemize}
+
+\section{Humanoide robotter som supplement til klassisk automation}
+
+Wattson er en del af en bredere tendens, hvor humanoide robotter undersøges
+som alternativ -- eller snarere som supplement -- til klassiske robotløsninger.
+To observationer er relevante her.
+
+For det første erstatter en humanoid robot ikke en industrirobot på de
+opgaver, hvor industrirobotten i forvejen er stærkest: høj volumen, høj
+præcision, fast cyklus og stiv montering. Det er fortsat den klassiske
+automations domæne, og erfaringerne fra dette projekt -- hvor mekanisk
+repeterbarhed og holdbarhed er begrænset af 3D-printet konstruktion --
+understreger den grænse.
+
+For det andet adresserer den humanoide form en kategori af opgaver, som
+klassisk automation har vanskeligt ved: lav volumen, høj variation,
+eksisterende menneskeskabt infrastruktur og opgaver, hvor end-effector og
+arbejdspose skifter ofte. Vedligehold og inspektion i højspændingsanlæg,
+som er Wattsons oprindelige anvendelseskontekst (jf.\
+afsnit~\ref{sec:anvendelseskontekst}), falder netop i den kategori.
+
+Om humanoide robotter får en udbredt rolle i industrien afhænger derfor
+mindre af, om de kan slå industrirobotter på deres hjemmebane, og mere af,
+om de kan løse de opgaver, som industrirobotter i dag ikke håndterer.
+Erfaringerne fra dette projekt -- både hvad der virker, og hvor mekanikken
+og elektronikken kommer til kort -- er et lille bidrag til den vurdering.
