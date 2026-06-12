@@ -47,7 +47,7 @@ headsepline, % Uncomment to get a line under the header
 
 \addbibresource{example.bib} % The filename of the bibliography
 
-\usepackage[autostyle=true]{csquotes} % Required to generate language-dependent quotes in the bibliography
+\usepackage[autostyle=false,style=english]{csquotes} % \enquote{} bruger engelske "to-oppe"-anførselstegn
 
 %----------------------------------------------------------------------------------------
 %	SIDEBRUDS-STYRING
@@ -99,6 +99,16 @@ headsepline, % Uncomment to get a line under the header
 \hypersetup{pdftitle=\ttitle} % Set the PDF's title to your title
 \hypersetup{pdfauthor=\authorname} % Set the PDF's author to your name
 \hypersetup{pdfkeywords=\keywordnames} % Set the PDF's keywords to your keywords
+% Overskriv class-filens farver: ingen rød/magenta i indholdsfortegnelse,
+% krydsreferencer eller citationer. Sort = ren tekst-fremtoning som i en
+% trykt rapport. Links er stadig klikbare i PDF'en.
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black,
+    filecolor=black,
+}
 }
 
 \begin{document}
@@ -150,14 +160,15 @@ headsepline, % Uncomment to get a line under the header
 \end{titlepage}
 
 %----------------------------------------------------------------------------------------
-%	INDHOLDSFORTEGNELSE / FIGUR- OG TABELLISTER
+%	INDHOLDSFORTEGNELSE
 %----------------------------------------------------------------------------------------
 
 \tableofcontents
 
-\listoffigures
-
-\listoftables
+% Figur- og tabel-fortegnelser er bevidst udeladt her -- alle figurer og
+% tabeller ligger i et separat bilags-dokument (Bilag.tex), som indleveres
+% sammen med rapporten. I rapporten henvises til bilaget med
+% "se Bilag, Figur~N" eller "se Bilag, Tabel~N".
 
 %----------------------------------------------------------------------------------------
 %	KAPITLER

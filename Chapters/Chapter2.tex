@@ -45,22 +45,27 @@ Disse rammebetingelser er fastlagt før integrationsarbejdet, men de er
 afgørende for at forstå, hvorfor armen ser ud, som den gør, og hvorfor de
 komponenter, der er bestilt og monteret, er valgt, som de er.
 
-\section{Servostyring}
-% PWM/positionssignal, intern positionsregulator i servoen, hvorfor PID
-% (henvis til at config-filer indeholder gain_P, gain_I, gain_D pr. led).
+% Princip: dette kapitel introducerer KUN den baggrund, som rapportens
+% senere kapitler faktisk bygger videre på. Det er ikke et generelt
+% kursus i regulering eller robotik.
 
-\section{PID-regulering}
-% Kort: P-, I-, D-leddenes rolle. Hvorfor det er nødvendigt for et led
-% med tyngdekraft, friktion og inerti.
-
-\section{Mekanik og moment}
-% Moment på skulder/albue ved fuld udstrækning. Simpel statisk beregning
-% (vægt af underarm + last x arm-længde) -> krav til servomoment.
-
-\section{3D-print som konstruktionsmateriale}
-% Anisotropi (lag-retning), kryb under last, slid i bevægelige dele,
-% tolerancer. Hvorfor det er relevant for et bevægeligt led.
+\section{Seriebus-servoen som integrations-komponent}
+% Hvad er en "intelligent" servo (indbygget mikrocontroller, encoder,
+% intern regulator). Hvorfor det fra integratorens perspektiv er en sort
+% boks man sender positionskommandoer til. Konfiguration via gain_P/I/D
+% i JSON-filer nævnes som ydre interface -- ingen PID-teori udledes,
+% fordi rapporten ikke tuner regulatoren. Bruges i Kap.~\ref{ch:analyse}
+% og Kap.~\ref{ch:idrift}.
 
 \section{Kommunikation: USB-serial og ROS~2}
-% UART/serial fra Jetson til ESP32 pr. servogruppe. Kort om ROS~2's
-% publish/subscribe-model (nok til at læseren forstår node-diagrammet senere).
+% Halv-duplex TTL-bus mellem ESP32 og servoer, USB-CDC mellem Jetson og
+% ESP32. ROS~2 publish/subscribe-model i det omfang læseren skal kunne
+% følge node-diagrammet i Kap.~\ref{ch:analyse} og forstå control_frequency-
+% diskussionen i Kap.~\ref{ch:idrift}.
+
+\section{3D-print som konstruktionsmateriale}
+% Anisotropi (lag-retning vs. belastningsretning), backlash i printede
+% koblinger, kryb under konstant last, slid i bevægelige interfaces.
+% Direkte input til materialevalg i Kap.~\ref{ch:mekanik}, til
+% observationen af den faldende udstrakte arm i Kap.~\ref{ch:idrift}
+% og til diskussionen i Kap.~\ref{ch:diskussion}.

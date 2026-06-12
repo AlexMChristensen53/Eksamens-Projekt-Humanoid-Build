@@ -2,20 +2,95 @@
 \chapter{Elektrisk integration og wiring}
 \label{ch:el}
 
-% Mål: ca. 2.5--3 sider.
+Dette kapitel beskriver den elektriske opbygning af det arm-delsystem,
+projektet omfatter: hvilke komponenter der indgår, hvordan de er
+forbundet, og hvilke integrationsproblemer der opstod undervejs.
 
 \section{Komponentoversigt}
-% Servoer (type, antal, spænding, strøm), ESP32-controller, Jetson Orin Nano,
-% strømforsyning. Tabel.
 
-\section{Strømbudget}
-% Beregnet maks-strøm pr. servo x antal samtidigt aktive led -> dimensionering
-% af strømforsyning og kabeltværsnit. Konkrete tal.
+Det elektriske delsystem omfatter komponenter på tre niveauer: aktuatorer
+i armen, en kommunikations-mikrocontroller mellem arm og host, og en host
+der kører ROS\,2-laget. Komponenterne er listet i tabellen nedenfor
+(se Bilag, Tabel~3). De væsentligste er:
 
-\section{Wiring og signalkæde}
-% Signal: Jetson -> USB -> ESP32 -> servobus -> servo ID 1--7.
-% Effekt: PSU -> fordeling -> servoer. Diagram.
+\begin{itemize}
+    \item 7~stk.\ Waveshare ST3215 seriebus-servoer, én pr.~led i venstre arm.
+          % TODO ALEX: bekræft eller ret. Jeg har skrevet:
+          % "indbygget magnetisk encoder og intern PID-regulator,
+          % kommunikerer på en halv-duplex TTL-bus".
+          % Spørgsmål: er det rigtigt? Er der andre spec-detaljer
+          % du gerne vil have med (spænding, max moment, opløsning)?
+          Servoerne har indbygget magnetisk encoder og intern PID-regulator
+          og kommunikerer på en halv-duplex TTL-bus.
+    \item 1~stk.\ ESP32-baseret kontrolboks (RØD), der konverterer mellem
+          USB på host-siden og servobussens TTL-niveau. To tilsvarende
+          bokse (GUL og HVID) findes til højre arm + hoved henholdsvis
+          hænder, men ligger uden for projektets afgrænsning.
+    \item 1~stk.\ NVIDIA Jetson Orin Nano, der kører ROS\,2 Humble og
+          afvikler manager-noden samt commissioning-værktøjerne.
+    \item Strømforsyning til servobussen samt logik-forsyning til
+          ESP32-boksen via USB.
+\end{itemize}
 
-\section{Praktiske valg}
-% Stik, kabelføring i armen, trækaflastning, isolering.
-% Eventuelle problemer og hvordan de blev løst.
+\section{Signalkæde og wiring}
+
+Signalvejen i den oprindelige konstruktion er kort og lineær:
+
+\begin{enumerate}
+    \item Jetson Orin Nano sender positionskommandoer på et ROS-topic.
+    \item Manager-noden serialiserer kommandoerne og skriver dem på en
+          virtuel COM-port mod ESP32-boksen.
+    \item ESP32-boksen konverterer beskeden til servobus-protokollen og
+          videresender den på den halv-duplexerede TTL-bus.
+    \item Hver ST3215-servo på bussen filtrerer på sit servo-ID og
+          udfører den modtagne positionskommando i sin egen interne
+          PID-sløjfe.
+\end{enumerate}
+
+Effektvejen er adskilt fra signalvejen: servobussen forsynes direkte fra
+sin egen forsyning, mens ESP32 og logik-niveau strømmes via USB fra
+Jetson'en.
+
+\section{Stabil portbinding for ESP32-bokse}
+\label{sec:usb-binding}
+
+Den væsentligste elektriske/integrationsmæssige rettelse i projektet
+vedrører tildelingen af USB-porte til de tre ESP32-bokse. Tidligere
+blev de adresseret som \enquote{/dev/ttyUSB0}, \enquote{/dev/ttyUSB1}
+og \enquote{/dev/ttyUSB2}, og rækkefølgen afhang af, hvilken boks
+operativsystemet enumererede først ved boot. I praksis betød det, at
+manager-noden kunne starte med at sende den venstre arms kommandoer
+til den højre arms ESP32, hvis kablerne var sat i en anden rækkefølge. 
+Systemet kører, det kører bare mod den forkerte hardware.
+
+Løsningen er at adressere boksene via deres faste sti i
+\enquote{/dev/serial/by-path/} frem for en bestemt tilslutningsrækkefølge
+\enquote{/dev/ttyUSBx}. Hver fysisk USB-port på Jetson-hubben har en
+unik sti, der ikke ændrer sig mellem boots eller hvis maskinen
+genstartes. Manager-nodens konfiguration blev opdateret til at slå op
+i denne sti, og der blev oprettet dokumentation for hvor hver ESP32 sluttes til.
+
+\begin{itemize}
+    \item Port 2.2 -- RØDT kabel -- venstre arm
+    \item Port 2.3 -- GULT kabel -- højre arm og hoved
+    \item Port 2.1 -- HVIDT kabel -- hænder
+\end{itemize}
+
+Mappingen afhænger nu af, hvilken fysisk USB-port boksen sidder i,
+ikke af om operatøren husker rækkefølgen ved tilslutning.
+
+\section{Praktiske valg under integrationen}
+
+% TODO ALEX: Slet hele denne sektion hvis der ikke er noget faktisk
+% at sige om kabelføring/stik/mekanisk mærkning, der adskiller
+% sig fra det oprindelige design.
+% Hvis der ER noget, fx:
+%   - Har du ændret på kabelføringen?
+%   - Er der specifikke trækaflastninger du har lavet?
+%   - Hvordan har du mærket stik/porte fysisk? (du nævnte selv
+%     nummerering på din replica frem for farvekode)
+% Skriv det her, så omskriver jeg.
+
+% TODO: konkret strømbudget (max strøm pr. servo x antal samtidigt
+% aktive + dimensionering af forsyning) når data foreligger fra lab.
+

@@ -2,11 +2,51 @@
 \chapter{Konklusion}
 \label{ch:konklusion}
 
-% Mål: ca. 0.5--1 side.
-% Svar direkte på problemformuleringen. Ingen ny information.
+Projektet stillede spørgsmålet om, hvordan en humanoid robotarm
+baseret på Energinets eksisterende 3D-design og software kan
+fremstilles, samles og integreres til en funktionel enhed med korrekt
+samspil mellem de mekaniske og elektriske delsystemer. Konklusionen
+samler de svar, projektet har leveret, kapitel for kapitel.
 
-% Punktvis svar:
-% - Mekanisk fremstilling og samling: opnået resultat.
-% - Elektrisk integration: opnået resultat.
-% - Software-styring af én arm: opnået resultat.
-% - Samlet vurdering: i hvor høj grad er problemformuleringen besvaret.
+\textbf{Mekanisk fremstilling og samling.} Venstre arm er printet,
+efterbearbejdet og samlet til en arbejdsklar enhed. De
+samlingsproblemer, der opstod undervejs -- snævre servohuse,
+akselpasninger med slør, kabelgennemføringer -- er løst ved manuel
+efterbearbejdning, og armen bevæger sig mekanisk frit gennem hele det
+konfigurerede arbejdsrum. Detaljer i kapitel~\ref{ch:mekanik}.
+
+\textbf{Elektrisk integration.} Armen er forbundet til en ESP32-boks
+og til Jetson Orin Nano-hosten via stabil portbinding i
+\enquote{/dev/serial/by-path/}. Den tidligere rækkefølgeafhængighed i
+\enquote{/dev/ttyUSBx} er dermed fjernet som fejlkilde. Signal- og
+effektveje er adskilte, og montagen er færdig og mærket. Detaljer i
+kapitel~\ref{ch:el}.
+
+\textbf{Software-integration og styring.} Armen kan styres
+positionsmæssigt led for led via slider-GUI'en og kan afspille
+præindspillede animations-sekvenser. Step-respons køres på alle
+syv venstre arm-led, og resultaterne dokumenteres i bilaget med
+det forbehold, der er beskrevet i afsnit~\ref{sec:hvad-maaler-vi}:
+målingerne karakteriserer command-pipelinen, ikke ST3215-servoens
+lukkede regulator, fordi ROS-laget bare videresender målpositioner uden at regulere selv.
+Detaljer i kapitel~\ref{ch:idrift}.
+
+\textbf{Tilføjelser til det oprindelige system.} Som del af projektet er
+der udviklet en commissioning-pakke med to målerelaterede noder
+(\enquote{step\_response\_node} og \enquote{repeatability\_node}) og
+en samlet betjenings-GUI til opstart og demo. Disse er beskrevet i
+kapitel~\ref{ch:idrift}. En per-led-effektmåling blev påbegyndt, men
+er ikke leveret i fungerende stand på grund af samme
+feedback-konfiguration, og den er taget ud af demoen for at undgå at
+love en måling, brugeren ikke får.
+
+\textbf{Samlet vurdering.} Problemformuleringens kerne -- at
+fremstille, samle og integrere armen til en funktionel enhed med
+korrekt samspil mellem mekanik og elektrik -- er besvaret. Armen
+fungerer, kan styres, og de integrationsfejl, der blev fundet
+undervejs, er enten løst eller eksplicit dokumenteret som vilkår,
+der følger af den oprindelige arkitektur. De tilføjelser, projektet har
+bidraget med ud over selve idriftsættelsen, gør det muligt at måle
+og demonstrere armens opførsel og at starte den samlede system-stak
+pålideligt.
+

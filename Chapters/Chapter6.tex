@@ -2,26 +2,210 @@
 \chapter{Idriftsættelse og test}
 \label{ch:idrift}
 
-% Mål: ca. 2.5--3 sider.
-% Her kobles teori og praksis sammen -- det vigtigste kapitel ift. §4.
+Dette kapitel dokumenterer den software- og styringsmæssige idriftsættelse
+af armen efter den mekaniske og elektriske integration. Kapitlet beskriver
+i hvilken konfiguration robotten faktisk køres, hvilke værktøjer der er
+udviklet for at kunne måle armens opførsel, hvad disse værktøjer faktisk
+måler -- og lige så vigtigt: hvad de \emph{ikke} måler -- samt en række
+konkrete problemer, der er stødt på undervejs, og hvordan de er løst.
 
 \section{Software-opsætning}
-% Jetson + ROS~2 workspace. Konfiguration så kun arm\_left indlæses
-% (config\_folder\_path eller deaktivering af øvrige JSON-filer).
-% Start af slider\_control.launch.py.
+
+Idriftsættelsen tager udgangspunkt i Energinets eksisterende ROS\,2-workspace
+(\enquote{energirobotter-ros-workspace}), der ligger på Jetson Orin Nano under
+ROS\,2 Humble. For at kunne arbejde isoleret med én arm uden at indlæse
+konfigurationer for hænder, hoved og højre arm, indlæses kun den relevante
+\enquote{servo\_arm\_left\_params.json}-fil ved opstart af
+\enquote{wattson\_servo\_manager\_node}. Selve opstarten sker via to launch-filer:
+\enquote{servos.launch.py} starter manager-noden, og
+\enquote{slider\_control.launch.py} starter en GUI med en skyder pr.~led, der
+gør det muligt at bevæge hvert led uafhængigt.
+
+\section{PID-konfiguration og kontrolarkitektur}
+
+Hver ST3215-servo har en intern positionsregulator. PID-værdierne
+pr. servo står i JSON-filen og er anvendt uændret fra Energinets
+konfiguration. Manager-noden videresender målpositioner til hver
+servo, og selve reguleringssløjfen lukkes inde i den enkelte ST3215.
+
+ROS-laget regulerer ikke selv og modtager ingen tilbagemelding fra
+servoernes faktiske position. Som test blev \enquote{feedback\_enabled}
+sat til \enquote{true} i både JSON-konfig og driverkode for at
+undersøge, om feedback-vejen kunne aktiveres uden yderligere arbejde.
+Resultatet var, at alle arm-led begyndte at oscillere, også uden
+eksterne kommandoer. Open-loop-konfigurationen blev derfor
+reetableret, og feedback-vejen blev i stedet brugt diagnostisk
+(afsnit~\ref{sec:hvad-maaler-vi}).
 
 \section{Kalibrering af led}
-% Nulpunkt, angle\_software\_min/max, gear\_ratio. Hvorfor kalibrering
-% er nødvendig før regulering giver mening.
 
-\section{PID-tuning i praksis}
-% Udgangspunkt: gain\_P, gain\_I, gain\_D fra eksisterende config.
-% Observeret respons pr. led. Hvis justeret: hvilke ændringer og hvorfor.
-% Knyttes tilbage til PID-teorien i kap.~\ref{ch:teori}.
+Inden armen kan styres meningsfuldt, skal hvert led kalibreres. For hver
+servo indeholder JSON-konfigurationen tre værdier, der definerer leddets
+arbejdsrum:
 
-\section{Funktionstest og målinger}
-% Repeterbarhed, range-of-motion pr. led, eventuelle målinger af
-% positionsfejl. Sammenhold med forventet opførsel.
+\begin{itemize}
+    \item \enquote{angle\_software\_min} og \enquote{angle\_software\_max} --
+          de software-grænser, manager-noden klipper kommandoer til, så
+          hverken servo eller mekanik ødelægges af en ude-af-grænse-kommando.
+    \item \enquote{angle\_default} -- den vinkel, leddet sættes til ved opstart.
+    \item \enquote{gear\_ratio} -- omsætningsforholdet mellem servo-aksel
+          og fysisk led, så ROS-niveauet kan tænke i led-vinkler
+          frem for servo-aksel-vinkler.
+\end{itemize}
+
+Kalibreringen er sket praktisk: armen bevæges manuelt med
+slider-GUI'en, og grænserne sættes til de positioner, hvor leddet
+fysisk når sit endestop uden at trække i mekanikken. Nul-positionen er
+sat til en geometrisk neutral pose, hvor armen hænger lodret langs
+torsoens side. Værdierne for venstre arm er dokumenteret i bilaget
+(se \emph{Bilag, Tabel~1}).
+
+\section{Tilføjelser: commissioning-værktøjer}
+\label{sec:commissioning-vaerktoejer}
+
+Det oprindelige system har ingen indbyggede værktøjer til at måle eller
+dokumentere armens dynamiske opførsel. Til brug for idriftsættelsen er
+der derfor udviklet en ny ROS-pakke, \enquote{arm\_commissioning}, der
+indeholder følgende noder:
+
+\begin{description}
+    \item[\enquote{step\_response\_node}] Kommanderer en step-input på en
+        valgt led, logger den feedback-vinkel, manager-noden publicerer,
+        og beregner klassiske step-respons-mål: rise time (10\,\%--90\,\%),
+        overshoot, settling time (med konfigurerbar tolerance) og
+        steady-state-fejl. Output: CSV-rådata og en PNG-graf pr.~kørsel.
+    \item[\enquote{repeatability\_node}] Sender armen frem og tilbage
+        mellem to konfigurerede positioner et antal cyklusser og
+        registrerer slut-positionen i hvert hold-vindue. Output: histogram
+        for de to målte pose-populationer plus mean, std og max-afvigelse.
+    \item[\enquote{launcher\_gui\_node}] Et Tk-baseret betjeningspanel, der
+        samler de typiske demo-services (DHCP, kameraets ROS-launch,
+        VR-broer, servo-manager, animationsafspilning) bag start/stop-knapper
+        med statusindikatorer og samlede logfaner. Begrundelse: en
+        eksamensdemo, hvor 5--6 terminalvinduer skal åbnes i en præcis
+        rækkefølge, er fragil; et samlet panel reducerer antallet af
+        fejlmuligheder.
+\end{description}
+
+For at \enquote{step\_response\_node} og \enquote{repeatability\_node} kunne
+hente positionsdata, blev der desuden tilføjet en feedback-publisher til
+\enquote{wattson\_servo\_manager\_node}: et nyt topic
+\enquote{/joint\_states\_feedback}, der publicerer den positionsværdi,
+manager-noden kender for hver servo. Dette topic er den eneste nye
+afhængighed, commissioning-værktøjerne tilfører til det eksisterende
+system.
+
+\section{Funktionstest: step-response pr.~led}
+
+Step-response køres på hvert af de syv venstre arm-led med samme
+parametre: 10\textdegree{} step fra nul, 12\,s logging, 50\,Hz
+samplerate, settling-tolerance 10\,\% af step-amplituden.
+
+% TODO ALEX (efter lab): indføj de målte værdier i tabellen
+% (Bilag, Tabel~2) og det repræsentative plot (Bilag, Figur~1).
+% Hvis tallene afslører større afvigelser mellem leddene, så
+% diskutér dem i kapitel~\ref{ch:diskussion}.
+Resultatet pr.~led sammenfattes i tabellen i bilaget
+(se \emph{Bilag, Tabel~2}). Et repræsentativt forløb for
+\enquote{joint\_left\_shoulder\_pitch} vises i \emph{Bilag, Figur~1}:
+den kommanderede vinkel som step-funktion, den loggede
+feedback-vinkel og de beregnede mål annoteret på plottet.
+
+% TODO efter lab lørdag: udfyld med de faktiske målte værdier.
+Afvigelser mellem leddene diskuteres i kapitel~\ref{ch:diskussion}.
+
+\section{Hvad værktøjerne måler -- og ikke måler}
+\label{sec:hvad-maaler-vi}
+
+Den feedback-vinkel, \enquote{step\_response\_node} logger, kommer fra
+ROS-topic'et \enquote{/joint\_states\_feedback}. Det topic publiceres
+af manager-noden og indeholder i den nuværende konfiguration den
+\emph{senest kommanderede} vinkel for hvert led, ikke en målt
+position fra servoens encoder. Det skyldes en tre-niveau gating på
+flaget \enquote{feedback\_enabled}, der i den oprindelige konfiguration
+står til \enquote{false}:
+
+\begin{enumerate}
+    \item I JSON-konfigurationen for venstre arm er
+          \enquote{feedback\_enabled} sat til \enquote{false} for alle
+          syv servoer.
+    \item Driveren \enquote{DriverWaveshare} har samme værdi som
+          instans-default, og manager-noden overskriver den ikke.
+    \item I \enquote{ServoControl.compute\_command} medfører
+          \enquote{feedback\_enabled = false}, at den cachede position
+          \enquote{self.angle} sættes lig den senest kommanderede vinkel
+          frem for en målt værdi.
+\end{enumerate}
+
+Konsekvensen for commissioning-værktøjerne er, at de tal, de
+udregner, ikke karakteriserer ST3215-servoens interne regulator. Det
+de måler, er kommandoernes vej gennem systemet -- fra en ny target
+publiceres på \enquote{/joint\_states}, til den cachede position
+afspejler den nye target. Det er en nyttig størrelse, fordi den
+dækker latency i ROS-laget, men det er \emph{ikke} en
+servo-karakteristik.
+
+Som beskrevet under PID-konfigurationen blev det afprøvet at slå
+\enquote{feedback\_enabled} til; armen begyndte at oscillere, og
+open-loop-konfigurationen blev derfor bibeholdt. Step-respons-tabellen
+i bilaget skal læses i lyset af dette: tallene er gyldige som
+sammenligningsgrundlag mellem leddene og som karakteristik af
+command-pipelinen, men de er ikke et udtryk for ST3215-regulatorens
+dynamik.
+
+\section{Andre integrationsrettelser}
+
+Ud over de fund, der direkte vedrører funktionstesten, blev der under
+idriftsættelsen rettet en række mindre integrationsfejl. De vigtigste
+er listet nedenfor; detaljer ligger i kildekodens commit-historik og
+bilag.
+
+\begin{description}
+    \item[Stabil portbinding for ESP32-bokse.] Tidligere blev de tre
+        USB-tilsluttede mikrocontrollere adresseret som
+        \enquote{/dev/ttyUSB0--2}, hvilket gjorde tildelingen afhængig af
+        tilslutningsrækkefølge. Manager-noden adresserer dem nu via
+        \enquote{/dev/serial/by-path/}, så hver fysisk port på
+        Jetson-USB-hubben permanent svarer til den samme logiske funktion.
+        Detaljer i kapitel~\ref{ch:el}.
+    \item[Race-tilstand i kinematik-nodens opstart.]
+        \enquote{elrik\_kdl\_kinematics\_node} crashede sporadisk under
+        opstart med en \enquote{AttributeError}, fordi en periodisk timer
+        blev oprettet, før node-instansens egne felter var initialiseret.
+        Fixet ved at flytte \enquote{create\_timer}-kaldet til slutningen
+        af \enquote{\_\_init\_\_}, så timeren først aktiveres, når
+        nodens tilstand er klar.
+    \item[Launcher-GUI bugs under hardware-rehearsal.]
+        % TODO ALEX: Faktiske bug-detaljer.
+        % Jeg havde skrevet:
+        %   - SSH-prompts løst med "OpenSSH ControlMaster-multiplexing"
+        %   - stop-respons på "flere titalls sekunder" løst med
+        %     "exec-replacement af remote-shell og bufret log-flushing"
+        %   - en commit der efterlod servo-manager i ikke-kompilerbar
+        %     tilstand, mens Jetson kørte cached binær
+        % Spørgsmål:
+        %   1. Du nævnte selv en "askpass-shim" — var det løsningen
+        %      på SSH-prompts, eller var det ControlMaster?
+        %   2. Hvad var det faktiske stop-response problem og fix?
+        %   3. Er commit-vs-cached-binary historien rigtig som
+        %      jeg har beskrevet den? Hvilken fil var det?
+        %   4. Andre launcher-GUI bugs du gerne vil have med?
+        Det samlede betjeningspanel blev iterativt rettet for en række
+        problemer, der kom frem under faktisk demo-brug.
+    \end{description}
 
 \section{Resultat}
-% Hvad armen kan / ikke kan ved aflevering.
+
+Ved afleveringstidspunktet kan armen styres positionsmæssigt led for led
+med slider-GUI'en og kan afspille præindspillede animations-sekvenser
+fra commissioning-pakkens animations-fane. Pålideligheden af de
+underliggende ROS-topics er verificeret via \enquote{ros2 topic hz}.
+
+% TODO efter lab lørdag: bekræft at step-respons er kørt for alle
+% syv led, eller juster sætningen herunder hvis kun en del er kørt.
+Step-respons køres på alle syv venstre arm-led og dokumenteres i bilaget.
+
+De væsentligste ikke-opnåede mål er en kalibreret closed-loop
+positionsregulering på ROS-niveau (fravalgt, jf.~ovenfor) og en
+funktionsdygtig per-led-effektmåling; sidstnævnte er påbegyndt, men
+ikke leveret, og er diskuteret i kapitel~\ref{ch:diskussion}.

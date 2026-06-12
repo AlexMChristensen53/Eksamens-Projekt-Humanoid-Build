@@ -89,27 +89,38 @@ Projektet er gennemført som et idriftsættelsesforløb: et eksisterende
 design omsættes til en fungerende fysisk enhed gennem fremstilling, samling,
 elektrisk integration og softwarekonfiguration. Arbejdet er foregået iterativt
 -- når et problem opstod under samling eller test, blev årsagen diagnosticeret
-og en løsning implementeret, før der gik videre. De vigtigste af disse
+og en løsning implementeret. De vigtigste af disse
 hændelser er medtaget i rapporten, fordi de illustrerer de praktiske
-konsekvenser af at bygge med 3D-printede komponenter.
+konsekvenser af at bygge med 3D-printede komponenter og af at integrere et
+eksisterende, kun delvist dokumenteret softwaresystem.
+
+Ud over selve idriftsættelsen omfatter projektet en række tilføjelser
+til det oprindelige system, som er udviklet for at gøre det praktisk at arbejde
+med: stabil portbinding for de tilsluttede mikrocontrollere, en
+samlet betjenings-GUI til opstart og demo, samt en commissioning-pakke
+med værktøjer til at måle og dokumentere armens opførsel. Disse
+tilføjelser er beskrevet i de relevante kapitler sammen med de
+problemer, der motiverede dem.
 
 \section{Rapportens opbygning}
 
 Rapporten er opbygget som følger:
 
 \begin{itemize}
-    \item Kapitel~\ref{ch:teori} gennemgår den teori, der anvendes senere
-          i rapporten: servostyring, PID-regulering, mekanisk belastning af
-          led samt egenskaberne ved 3D-printede konstruktionsdele.
-    \item Kapitel~\ref{ch:analyse} beskriver det eksisterende system og
-          begrunder afgrænsningen til én arm.
-    \item Kapitel~\ref{ch:mekanik} dokumenterer den mekaniske fremstilling
+    \item \textbf{Kapitel~\ref{ch:teori}} -- den baggrundsviden, der
+          anvendes senere i rapporten: seriebus-servoer som integrations-
+          komponent, ROS\,2 som kommunikationsplatform samt egenskaberne
+          ved 3D-printede konstruktionsdele.
+    \item \textbf{Kapitel~\ref{ch:analyse}} -- det eksisterende system og
+          begrundelse for afgrænsningen til én arm.
+    \item \textbf{Kapitel~\ref{ch:mekanik}} -- den mekaniske fremstilling
           og samling.
-    \item Kapitel~\ref{ch:el} beskriver den elektriske integration.
-    \item Kapitel~\ref{ch:idrift} dokumenterer idriftsættelsen, herunder
+    \item \textbf{Kapitel~\ref{ch:el}} -- elektrisk integration og wiring.
+    \item \textbf{Kapitel~\ref{ch:idrift}} -- idriftsættelse, herunder
           softwareopsætning, kalibrering og test.
-    \item Kapitel~\ref{ch:diskussion} diskuterer konsekvenserne af at have
+    \item \textbf{Kapitel~\ref{ch:diskussion}} -- konsekvenserne af at have
           bygget armen udelukkende i 3D-printede dele.
-    \item Kapitel~\ref{ch:konklusion} besvarer problemformuleringen.
-    \item Kapitel~\ref{ch:perspektivering} skitserer det videre arbejde.
+    \item \textbf{Kapitel~\ref{ch:konklusion}} -- besvarelse af
+          problemformuleringen.
+    \item \textbf{Kapitel~\ref{ch:perspektivering}} -- det videre arbejde.
 \end{itemize}

@@ -2,22 +2,112 @@
 \chapter{Diskussion}
 \label{ch:diskussion}
 
-% Mål: ca. 2--2.5 sider.
-% Differentierings-kapitlet. Her viser du selvstændig vurdering.
+Dette kapitel diskuterer betydningen af de fund og de valg, der er
+beskrevet i kapitlerne om mekanik, elektrisk integration og
+idriftsættelse. Fokus er på, hvad resultaterne kan og ikke kan bruges
+til, hvilke kompromiser projektet har truffet, og hvad der er
+påbegyndt men ikke leveret.
 
-\section{Konsekvenser af fuld 3D-print}
-% Slør i samlinger over tid, kryb under konstant last, slid i bevægelige
-% interfaces, repeterbarhed påvirket af temperatur og materialealder.
-% Hvad er observeret, hvad er rimeligt at forvente?
+\section{Hvad step-respons-målingerne faktisk siger}
 
-\section{Reparation kontra udskiftning}
-% Når en printet del fejler: kan den repareres, eller printes der bare en ny?
-% Konsekvens for vedligehold og oppetid.
+Som beskrevet i afsnit~\ref{sec:hvad-maaler-vi} er den
+feedback-vinkel, commissioning-værktøjerne logger, identisk med den
+senest kommanderede vinkel for det pågældende led. Det er ikke en målt
+position fra servoens encoder. Konsekvensen er, at de
+rise time-, overshoot- og settling time-tal, der vil komme i bilaget
+efter lab-kørslerne, ikke karakteriserer ST3215-servoens interne
+regulator -- de karakteriserer \emph{kommando-vejen} fra GUI'en gennem
+ROS-topics og manager-noden, indtil den cachede position opdateres.
 
-\section{Begrænsninger i den valgte løsning}
-% Hvad denne arm IKKE kan -- og hvorfor det er en konsekvens af konstruktionsvalget,
-% ikke en fejl ved arbejdet.
+Det betyder ikke, at tallene er værdiløse. De er meningsfulde som
+sammenligningsgrundlag mellem leddene: hvis tre led har næsten ens
+target-pipelines og ét led skiller sig ud, peger det på, at noget i
+manager-loopet eller i kommandobatchningen behandler det led
+anderledes. Men de kan ikke bruges til at sige noget om servoens
+mekaniske dynamik, dens evne til at holde en position under last,
+eller dens reelle settling-opførsel.
 
-\section{Alternative valg}
-% Hybrid (3D-printet skal + metal-led)? Andre servoer? Hvad ville det koste
-% i tid/kompleksitet, og hvad ville det give?
+\section{Open-loop på ROS-niveau som design-valg}
+
+ROS-laget videresender bare positionskommandoer ud til servoerne og
+laver ikke nogen regulering selv. ST3215-servoen kører sin egen PID-sløjfe
+internt, og PID-gainsne i JSON-konfigurationen er Energinets standardværdier. Da
+\enquote{feedback\_enabled} blev sat til \enquote{true} som test, blev
+armen øjeblikkeligt ustabil, og open-loop-konfigurationen blev derfor
+reetableret.
+
+Konsekvensen for projektet er, at en kalibreret closed-loop
+positionsregulering på ROS-niveau ikke er leveret. Funktioner, der
+\emph{forudsætter} faktisk positions-feedback -- fx en
+per-led-effektmåling, som er diskuteret nedenfor -- kan derfor heller
+ikke leveres i den nuværende konfiguration.
+
+\section{Stabil portbinding}
+
+Tildelingen af USB-portene til de tre ESP32-bokse afhang tidligere af,
+hvilken rækkefølge boksene blev sat i, og hvilken rækkefølge
+operativsystemet enumererede dem i ved boot. Hvis kablerne blev sat
+i en anden rækkefølge end sidste gang, kunne manager-noden ende med
+at sende den venstre arms kommandoer til den højre arms ESP32 --
+uden at det gav nogen åbenlys fejl, fordi systemet \emph{kørte}, det
+kørte bare mod den forkerte arm.
+
+Med løsningen via \enquote{/dev/serial/by-path/} afhænger mappingen
+nu af, hvilken fysisk USB-port boksen sidder i, og ikke af om
+operatøren husker rækkefølgen. Det er en billig rettelse, der fjerner
+en hel klasse af fejl, som ellers først dukker op under demo eller
+efter en flytning. Detaljerne er dokumenteret i kapitel~\ref{ch:el}.
+
+\section{Mekaniske grænser i 3D-printet arm}
+
+Armens funktionelle arbejdsrum er mindre end dens geometriske
+rækkevidde. I udstrakt pose med skulderen omkring 90\textdegree{} og
+albuen strakt observeres, at armen langsomt synker, selv når
+positionskommandoen holdes konstant. Dette er ikke en software-fejl:
+gravitationsmomentet på en fuldt udstrakt arm er stort, og når
+ST3215-servoen ikke længere kan holde imod, synker leddet.
+
+Konsekvensen er, at præindspillede animations-sekvenser og demoer skal
+holdes inden for poser, hvor det statiske moment er moderat. Det er
+en konkret begrænsning, der ikke kommer fra software-laget, men fra
+materialevalget og servovalget i den oprindelige konstruktion.
+
+\section{Påbegyndt, men ikke leveret: per-led-effektmåling}
+
+% TODO ALEX: Effektmålings-værktøjet.
+% Jeg havde skrevet:
+%   - register 62 for spænding, 69--70 for strøm (gætværk fra mig)
+%   - topic-navn /servo_power
+%   - formål: "dokumentation af reelt effektforbrug under forskellige
+%     bevægelsesmønstre"
+% Spørgsmål:
+%   1. Hvilke ST3215-registre læses faktisk for spænding og strøm?
+%   2. Hvad hedder topic'et?
+%   3. Hvorfor begyndte du på værktøjet — hvad skulle det bruges til?
+%   4. Er det rigtigt at det blev droppet fordi feedback-vejen er off,
+%      eller var der en anden grund?
+Som del af commissioning-pakken blev der påbegyndt et værktøj til at
+måle spændings- og strømforbrug pr.~servo og publicere det som et nyt
+ROS-topic. Værktøjet er ikke leveret i fungerende stand til denne
+aflevering.
+
+\section{Robusthed i værktøjs-laget}
+
+Launcher-GUI'en er ikke en kerne-komponent i robotten, men en
+integrations-flade mellem operatør og ROS-stak. De rettelser, den
+krævede under idriftsættelsen, var derfor primært
+integrations-rettelser: at SSH-login kun spørger om password én gang
+og ikke ved hvert kald; at stop-signaler bliver sendt korrekt ned i
+procestræet for de launch-filer, GUI'en starter; og en kontrol af,
+at den binær, Jetson'en faktisk kører, matcher den sidste committede
+kildekode (et tidligere mismatch mellem cached binær og kildetræ var
+årsag til en svær fejl at finde).
+
+Disse rettelser fandtes ved at køre den fulde start-stop-sekvens
+ende-til-ende på den faktiske hardware. Det er den afprøvningsform,
+der har været brugbar for launcher-GUI'en; enkeltkomponent-tests af
+de underliggende ROS-services siger ikke noget om, hvordan GUI'en
+starter og stopper dem under demobetingelser. Det er en del af baggrunden for at investere
+tid i et samlet betjeningspanel og en pre-flight-checkliste frem for
+at lade hver service starte i sit eget terminalvindue.
+

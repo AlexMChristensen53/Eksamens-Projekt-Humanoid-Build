@@ -50,7 +50,7 @@ håndled (pitch, roll).
 
 \subsection{Aktuatorer}
 
-De syv led i armen drives af Waveshare ST3215 \emph{seriebus-servoer}.
+De syv led i armen drives af Waveshare ST3215 seriebus-servoer.
 Dette er en intelligent servotype med indbygget mikrocontroller, magnetisk
 positionsencoder og en intern PID-løkke, der lukker positionsreguleringen
 om sin egen aksel. Servoerne kommunikerer over en halv-duplex TTL-seriel
@@ -71,7 +71,7 @@ ved opstart, jf.\ afsnit~\ref{sec:doks-kode}.
 Servoerne er ikke forbundet direkte til Jetsonen, men til en dedikeret
 ESP32-mikrocontroller, der fungerer som bus-master på den serielle
 servobus. ESP32'en er via USB forbundet til Jetsonen og fremstår dér som
-en virtuel COM-port (\texttt{/dev/ttyUSB\textit{x}}). I den fuldt opbyggede
+en virtuel COM-port (\enquote{/dev/ttyUSBx}). I den fuldt opbyggede
 robot er der flere ESP32-controllere (én pr.\ logisk gruppe -- venstre arm
 + hoved, højre arm, hænder), men i den afgrænsede konfiguration anvendes
 kun den, der styrer den valgte arm.
@@ -119,17 +119,17 @@ teleoperation, kamera-integration og opstart af robotten. For rapportens
 formål er især følgende relevant:
 
 \begin{itemize}
-    \item \texttt{servos.launch.py} -- starter en
-          \texttt{wattson\_servo\_manager\_node}, der indlæser
+    \item \enquote{servos.launch.py} -- starter en
+          \enquote{wattson\_servo\_manager\_node}, der indlæser
           servokonfigurationer fra en angiven mappe og opretter
           ROS-topics for hver gruppe.
-    \item \texttt{slider\_control.launch.py} -- en GUI med skyderkontroller
+    \item \enquote{slider\_control.launch.py} -- en GUI med skyderkontroller
           pr.\ led. Velegnet til idriftsættelse, fordi den ikke kræver
           VR-udstyr, kamera eller invers kinematik.
-    \item \texttt{servo\_arm\_left\_params.json} -- konfigurationsfil for
+    \item \enquote{servo\_arm\_left\_params.json} -- konfigurationsfil for
           den venstre arms syv servoer. Indeholder for hvert led bl.a.\
-          servo-ID, gear-ratio, PID-gains (\texttt{gain\_P},
-          \texttt{gain\_I}, \texttt{gain\_D}), software-grænser og
+          servo-ID, gear-ratio, PID-gains (\enquote{gain\_P},
+          \enquote{gain\_I}, \enquote{gain\_D}), software-grænser og
           udgangsposition.
 \end{itemize}
 
