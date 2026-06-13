@@ -8,29 +8,37 @@ forbundet, og hvilke integrationsproblemer der opstod undervejs.
 
 \section{Komponentoversigt}
 
-Det elektriske delsystem omfatter komponenter på tre niveauer: aktuatorer
-i armen, en kommunikations-mikrocontroller mellem arm og host, og en host
-der kører ROS\,2-laget. Komponenterne er listet i tabellen nedenfor
-(se Bilag, Tabel~3). De væsentligste er:
+Det elektriske delsystem omfatter komponenter på tre niveauer:
+aktuatorer i armen, en kommunikations-mikrocontroller mellem arm og
+host, og en host, der kører ROS\,2-laget. Den fulde komponentliste
+fremgår af Tabel~\ref{tab:komponenter-venstre-arm}. Farvemærkningen
+i tabellen følger den fysiske kabel-isolering på de tre ESP32-bokse,
+så hver USB-port på hubben permanent svarer til den samme logiske
+funktion.
 
-\begin{itemize}
-    \item 7~stk.\ Waveshare ST3215 seriebus-servoer, én pr.~led i venstre arm.
-          % TODO ALEX: bekræft eller ret. Jeg har skrevet:
-          % "indbygget magnetisk encoder og intern PID-regulator,
-          % kommunikerer på en halv-duplex TTL-bus".
-          % Spørgsmål: er det rigtigt? Er der andre spec-detaljer
-          % du gerne vil have med (spænding, max moment, opløsning)?
-          Servoerne har indbygget magnetisk encoder og intern PID-regulator
-          og kommunikerer på en halv-duplex TTL-bus.
-    \item 1~stk.\ ESP32-baseret kontrolboks (RØD), der konverterer mellem
-          USB på host-siden og servobussens TTL-niveau. To tilsvarende
-          bokse (GUL og HVID) findes til højre arm + hoved henholdsvis
-          hænder, men ligger uden for projektets afgrænsning.
-    \item 1~stk.\ NVIDIA Jetson Orin Nano, der kører ROS\,2 Humble og
-          afvikler manager-noden samt commissioning-værktøjerne.
-    \item Strømforsyning til servobussen samt logik-forsyning til
-          ESP32-boksen via USB.
-\end{itemize}
+\begin{table}[H]
+\centering
+\caption{Hardware-komponenter for venstre arm.}
+\label{tab:komponenter-venstre-arm}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.36\textwidth}
+                  c
+                  >{\raggedright\arraybackslash}p{0.46\textwidth}@{}}
+\toprule
+\textbf{Komponent} & \textbf{Antal} & \textbf{Kommentar} \\
+\midrule
+Waveshare ST3215-servo        & 7 & 12\,V, ID 1--7. \\
+Waveshare SC09-servo          & 5 & 5\,V, håndens fem fingre. \\
+ESP32-baseret USB-bridge      & 1 & USB til servobus. \\
+Mean Well DDR-120             & 1 & DC-DC-omformer, 12\,V til ST3215. \\
+Chinfa DRD15 13.5W            & 1 & DC-DC-omformer, 5\,V til SC09. \\
+RS Pro 264V 120W              & 1 & Hovedforsyning, 120\,W. \\
+Siemens Sentron 8A            & 2 & Sikringer på 12\,V- og 5\,V-skinnen. \\
+USB-hub med 3 porte           & 1 & Rød, gul, hvid. \\
+Jetson Orin Nano              & 1 & ROS\,2-host. \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Signalkæde og wiring}
 

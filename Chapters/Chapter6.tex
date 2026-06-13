@@ -47,7 +47,7 @@ arbejdsrum:
     \item \enquote{angle\_software\_min} og \enquote{angle\_software\_max} --
           de software-grænser, manager-noden klipper kommandoer til, så
           hverken servo eller mekanik ødelægges af en ude-af-grænse-kommando.
-    \item \enquote{angle\_default} -- den vinkel, leddet sættes til ved opstart.
+    \item \enquote{default\_position} -- den vinkel, leddet sættes til ved opstart.
     \item \enquote{gear\_ratio} -- omsætningsforholdet mellem servo-aksel
           og fysisk led, så ROS-niveauet kan tænke i led-vinkler
           frem for servo-aksel-vinkler.
@@ -176,22 +176,71 @@ bilag.
         af \enquote{\_\_init\_\_}, så timeren først aktiveres, når
         nodens tilstand er klar.
     \item[Launcher-GUI bugs under hardware-rehearsal.]
-        % TODO ALEX: Faktiske bug-detaljer.
-        % Jeg havde skrevet:
-        %   - SSH-prompts løst med "OpenSSH ControlMaster-multiplexing"
-        %   - stop-respons på "flere titalls sekunder" løst med
-        %     "exec-replacement af remote-shell og bufret log-flushing"
-        %   - en commit der efterlod servo-manager i ikke-kompilerbar
-        %     tilstand, mens Jetson kørte cached binær
-        % Spørgsmål:
-        %   1. Du nævnte selv en "askpass-shim" — var det løsningen
-        %      på SSH-prompts, eller var det ControlMaster?
-        %   2. Hvad var det faktiske stop-response problem og fix?
-        %   3. Er commit-vs-cached-binary historien rigtig som
-        %      jeg har beskrevet den? Hvilken fil var det?
-        %   4. Andre launcher-GUI bugs du gerne vil have med?
         Det samlede betjeningspanel blev iterativt rettet for en række
-        problemer, der kom frem under faktisk demo-brug.
+        problemer, der først kom frem under faktisk demo-brug. De fire
+        vigtigste rettelser beskrives nedenfor.
+
+        \paragraph{Adgangskode-prompts ved fjernlogin.}
+        Launches af ROS-noder på Jetson sker fra GUI'en via en
+        krypteret fjern\-forbindelse. Oprindeligt skulle operatøren
+        indtaste password ved hvert kald, hvilket gjorde et
+        sammenhængende demo-flow uigennemførligt. Problemet blev løst
+        med to mekanismer. Først blev der lavet en lille hjælpe-proces,
+        som leverer adgangskoden gennem et grafisk dialog\-vindue, så
+        fjernforbindelsen ikke længere kræver, at GUI'en har en
+        terminal at spørge i. Dernæst blev der konfigureret deling af
+        forbindelsen, så det første login etablerer en
+        baggrunds-forbindelse, som efterfølgende kald genbruger.
+        Resultatet er, at password kun spørges én gang pr.~service og
+        ikke én gang pr.~ROS-launch. En mere permanent løsning ville
+        være login med kryptografisk nøgle frem for adgangskode, men
+        det er fravalgt, da det ville kræve ændringer i Jetsons
+        konfiguration uden for projektets afgrænsning.
+
+        \paragraph{Langsom respons på stop-knappen.}
+        Den oprindelige stop-knap i GUI'en reagerede med 30--60
+        sekunders forsinkelse, hvilket gjorde nødstop praktisk
+        ubrugeligt. Årsagen var, at stop-signalet ikke nåede helt ned
+        til de ROS-noder, der faktisk kørte: signalet blev fanget af
+        en mellemliggende skal-proces, og selve noden levede videre
+        som en frikoblet baggrunds-proces. Rettelsen bestod i tre
+        dele. For det første blev kommandoen om\-skrevet, så
+        ROS-noden overtager skal-processen direkte i stedet for at
+        køre som dens barn. For det andet startes hver service nu i
+        sin egen proces-gruppe, så stop-knappen kan signalere hele
+        gruppen på én gang og dermed også fange middleware- og
+        controller-processer, der eventuelt er startet sammen med
+        noden. For det tredje sendes først et blødt afbrydelses-signal,
+        som lader noden rydde op, og hvis processen mod forventning
+        stadig kører efter en kort frist, sendes et hårdere
+        terminerings-signal som fallback. Tilsammen bringer
+        ændringerne respons\-tiden under et sekund.
+
+        \paragraph{Manglende synkronisering mellem laptop og Jetson.}
+        Under en refaktorering blev kildekoden til en central node
+        på laptop-siden uforvarende beskadiget, men på Jetson kørte
+        systemet tilsyneladende videre uden fejl. Forklaringen var,
+        at Python på Jetson havde en cached udgave af samme modul
+        liggende fra en tidligere build og foretrak den frem for at
+        fejle på den nye kilde. Diskrepansen blev først opdaget, da
+        Jetson blev rebuildt fra grunden og pludselig fejlede ved
+        opstart. Den varige rettelse blev derfor proces-mæssig og
+        ikke kode-mæssig: før en kritisk demo skal Jetson altid
+        bygges fra rene mapper, så det testede svarer til det
+        kørende.
+
+        \paragraph{Øvrige mindre rettelser.}
+        Ved luk af GUI'en kunne et stop-kald ramme en system-tjeneste
+        ejet af root og resultere i en rettighedsfejl, så vinduet
+        hang. Det blev rettet ved at omslutte alle service-stop i
+        fejl\-håndtering og foretage netop dette stop med forhøjede
+        rettigheder. Dernæst blev et eksperiment med at hæve
+        kontrol-frekvensen fra 10 til 50~Hz for jævnere bevægelse
+        rullet tilbage igen. Robottens 14 servoer deler en fælles
+        seriebus, og målingerne pr.~servo er begrænset af bussens
+        gennemløb, ikke af CPU'en. En cyklustid på 20~ms svarende
+        til 50~Hz er derfor fysisk umulig på den eksisterende bus,
+        og forsøget gav i praksis ustabile bevægelser uden gevinst.
     \end{description}
 
 \section{Resultat}

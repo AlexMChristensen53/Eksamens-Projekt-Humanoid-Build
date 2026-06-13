@@ -74,22 +74,29 @@ materialevalget og servovalget i den oprindelige konstruktion.
 
 \section{Påbegyndt, men ikke leveret: per-led-effektmåling}
 
-% TODO ALEX: Effektmålings-værktøjet.
-% Jeg havde skrevet:
-%   - register 62 for spænding, 69--70 for strøm (gætværk fra mig)
-%   - topic-navn /servo_power
-%   - formål: "dokumentation af reelt effektforbrug under forskellige
-%     bevægelsesmønstre"
-% Spørgsmål:
-%   1. Hvilke ST3215-registre læses faktisk for spænding og strøm?
-%   2. Hvad hedder topic'et?
-%   3. Hvorfor begyndte du på værktøjet — hvad skulle det bruges til?
-%   4. Er det rigtigt at det blev droppet fordi feedback-vejen er off,
-%      eller var der en anden grund?
 Som del af commissioning-pakken blev der påbegyndt et værktøj til at
-måle spændings- og strømforbrug pr.~servo og publicere det som et nyt
-ROS-topic. Værktøjet er ikke leveret i fungerende stand til denne
-aflevering.
+måle og logge effektforbruget pr.~led. Formålet var at dokumentere
+termisk belastning og strømforbrug under forskellige bevægelses\-mønstre
+(armen i hvile, teleoperation i neutral pose, teleoperation med strakt
+arm samt animations\-afspilning) som understøttende data til
+diskussionen i denne rapport. Servoerne stiller selv spændings- og
+strøm\-aflæsninger til rådighed via servobussen, så det kræver ikke
+ekstra hardware -- alene en udvidelse af software-laget.
+
+Værktøjet blev imidlertid fravalgt inden eksamenstesten. Aflæsningen
+ville lægge sig oven i den eksisterende trafik på den samme servobus,
+som armens positionskommandoer i forvejen bruger, og bussens
+gennemløb er allerede en flaskehals ved den valgte kontrolfrekvens.
+Den ekstra trafik forskød timingen så meget, at servoernes interne
+regulator begyndte at oscillere -- den samme observation som beskrevet
+under PID-konfigurationen i kapitel~\ref{ch:idrift}. Tradeoff'et stod
+altså mellem en stabil arm uden effektmåling og en effektmåling med
+ustabil arm, og det første blev valgt af demonstrationshensyn.
+
+En realistisk videreførelse ville være at flytte aflæsningen ud i en
+langsommere baggrunds-måling i en separat tråd, så den ikke længere
+konkurrerer med kontrolloopets tids\-budget på bussen. Det er ikke
+implementeret i denne aflevering.
 
 \section{Robusthed i værktøjs-laget}
 

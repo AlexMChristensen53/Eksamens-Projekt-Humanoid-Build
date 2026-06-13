@@ -1,25 +1,159 @@
-% Appendix A
+% Appendix A -- Bilag
 
-\chapter{Frequently Asked Questions} % Main appendix title
+\chapter{Bilag}
+\label{AppendixA}
 
-\label{AppendixA} % For referencing this appendix elsewhere, use \ref{AppendixA}
+Dette bilag samler de tabeller, fotos og målegrafer, der er henvist
+til fra hovedteksten. Tabellerne er nummereret i den rækkefølge, de
+introduceres i rapporten.
 
-\section{How do I change the colors of links?}
+\section{Tabel 1 -- Kalibreringsværdier for venstre arm}
+\label{tab:kalibrering}
 
-The color of links can be changed to your liking using:
+Tabel~\ref{tab:kalibrering-tab} viser de kalibreringsværdier, der
+bruges ved opstart af manager-noden for venstre arm. Alle vinkler er
+angivet i grader. Kolonnen \textbf{Retning} angiver, om led og servo
+drejer samme vej ($+$) eller modsat ($-$). \textbf{Gear} er antallet
+af servo-omdrejninger pr.~led-omdrejning. \textbf{Min} og \textbf{Maks}
+er de software-grænser, manager-noden klipper kommandoer til,
+\textbf{Default} er leddets opstartsvinkel, og \textbf{Maks.\ hast.}
+er den højeste tilladte vinkelhastighed i grader pr.~sekund.
 
-{\small\verb!\hypersetup{urlcolor=red}!}, or
+\begin{table}[H]
+\centering
+\caption{Kalibreringsværdier for de syv led i venstre arm. Den
+indbyggede positions-regulator i hver servo bruges direkte; ROS-laget
+regulerer ikke selv (jf.~kapitel~\ref{ch:idrift}).}
+\label{tab:kalibrering-tab}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Led} & \textbf{ID} & \textbf{Retning} & \textbf{Gear} & \textbf{Min} & \textbf{Maks} & \textbf{Default} \\
+\midrule
+Skulder, pitch  & 7 & $+$ & 3 & 120 & 240 & 150 \\
+Skulder, roll   & 6 & $-$ & 3 & 120 & 230 & 180 \\
+Overarm, yaw    & 5 & $+$ & 3 & 120 & 230 & 180 \\
+Albue, pitch    & 4 & $+$ & 3 & 120 & 240 & 120 \\
+Underarm, yaw   & 3 & $+$ & 1 & 120 & 270 & 180 \\
+Håndled, pitch  & 2 & $+$ & 1 & 120 & 230 & 180 \\
+Håndled, roll   & 1 & $-$ & 1 & 120 & 230 & 180 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-{\small\verb!\hypersetup{citecolor=green}!}, or
+\section{Tabel 2 -- Step-respons-resultater}
+\label{tab:stepresponse}
 
-{\small\verb!\hypersetup{allcolor=blue}!}.
+Step-respons er målt for hvert led ved at sende et fast vinkel-step
+fra leddets default-position og logge den feedback-vinkel,
+manager-noden publicerer (jf.~kapitel~\ref{ch:idrift}). \emph{Stigetid}
+er tiden, det tager den loggede vinkel at gå fra 10~\% til 90~\% af
+step-amplituden. \emph{Overshoot} er den procentvise overskridelse af
+målpositionen i forhold til step-amplituden. \emph{Indsvingningstid}
+er det tidspunkt, hvor vinklen første gang er inden for $\pm 2~\%$ af
+slutværdien og forbliver der. Resultaterne er sammenfattet i
+Tabel~\ref{tab:stepresponse-tab}.
 
-\noindent If you want to completely hide the links, you can use:
+\begin{table}[H]
+\centering
+\caption{Step-respons-metrikker pr.~led målt under idriftsættelsen.
+Råddata er gemt som CSV-filer, der ledsager rapporten.}
+\label{tab:stepresponse-tab}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Led} & \textbf{Stigetid [s]} & \textbf{Overshoot [\%]} & \textbf{Indsvingning [s]} \\
+\midrule
+Skulder, pitch  & TODO & TODO & TODO \\
+Skulder, roll   & TODO & TODO & TODO \\
+Overarm, yaw    & TODO & TODO & TODO \\
+Albue, pitch    & TODO & TODO & TODO \\
+Underarm, yaw   & TODO & TODO & TODO \\
+Håndled, pitch  & TODO & TODO & TODO \\
+Håndled, roll   & TODO & TODO & TODO \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-{\small\verb!\hypersetup{allcolors=.}!}, or even better: 
+\section{Tabel 3 -- Komponentliste}
+\label{tab:komponenter}
 
-{\small\verb!\hypersetup{hidelinks}!}.
+Den fulde komponentliste fremgår af kapitel~\ref{ch:el}
+(Tabel~\ref{tab:komponenter-venstre-arm}) og gengives her som
+hurtig opslagsreference.
 
-\noindent If you want to have obvious links in the PDF but not the printed text, use:
+\begin{table}[H]
+\centering
+\caption{Komponentoversigt for venstre-arm-opsætningen.}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.36\textwidth}
+                  c
+                  >{\raggedright\arraybackslash}p{0.46\textwidth}@{}}
+\toprule
+\textbf{Komponent} & \textbf{Antal} & \textbf{Kommentar} \\
+\midrule
+Waveshare ST3215-servo        & 7 & 12\,V, ID 1--7. \\
+Waveshare SC09-servo          & 5 & 5\,V, håndens fem fingre. \\
+ESP32-baseret USB-bridge      & 1 & USB til servobus. \\
+Mean Well DDR-120             & 1 & DC-DC-omformer, 12\,V til ST3215. \\
+Chinfa DRD15 13.5W            & 1 & DC-DC-omformer, 5\,V til SC09. \\
+RS Pro 264V 120W              & 1 & Hovedforsyning, 120\,W. \\
+Siemens Sentron 8A            & 2 & Sikringer på 12\,V- og 5\,V-skinnen. \\
+USB-hub med 3 porte           & 1 & Rød, gul, hvid. \\
+Jetson Orin Nano              & 1 & ROS\,2-host. \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-{\small\verb!\hypersetup{colorlinks=false}!}.
+\section{Figur 1 -- Step-respons for skulderens pitch-led}
+\label{fig:stepresponse}
+
+Figur~\ref{fig:stepresponse-fig} viser et repræsentativt
+step-respons-forløb for skulderens pitch-led. Den blå kurve er den
+kommanderede vinkel som step-funktion, og den orange kurve er den
+loggede feedback-vinkel. De beregnede metrikker fra
+Tabel~\ref{tab:stepresponse-tab} er markeret direkte på plottet.
+
+\begin{figure}[H]
+\centering
+% \includegraphics[width=0.8\textwidth]{Figures/step_response_shoulder_pitch.pdf}
+\caption{Step-respons for skulderens pitch-led ved et step på
+$\Delta\theta = $ TODO$^{\circ}$. Målt under idriftsættelsen.}
+\label{fig:stepresponse-fig}
+\end{figure}
+
+\section{Foto-bilag}
+\label{sec:fotos}
+
+\begin{figure}[H]
+\centering
+% \includegraphics[width=0.7\textwidth]{Figures/foto_usb_boks.jpg}
+\caption{USB-hub med de tre porte mærket efter kabelfarverne på de
+tilsluttede ESP32-bokse.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+% \includegraphics[width=0.7\textwidth]{Figures/foto_arm_neutral.jpg}
+\caption{Venstre arm i neutral pose, hvor alle led står på deres
+default-vinkel fra Tabel~\ref{tab:kalibrering-tab}.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+% \includegraphics[width=0.7\textwidth]{Figures/foto_arm_extended.jpg}
+\caption{Venstre arm i strakt pose som brugt under afprøvning af de
+mekaniske grænser.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+% \includegraphics[width=0.7\textwidth]{Figures/foto_esp32.jpg}
+\caption{ESP32-boksen (\enquote{rød boks}), der driver venstre arms
+servobus.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+% \includegraphics[width=0.7\textwidth]{Figures/foto_launcher_gui.png}
+\caption{Launcher-GUI under demo. Service-knapper er placeret øverst,
+og animations-fanen findes nederst.}
+\end{figure}
