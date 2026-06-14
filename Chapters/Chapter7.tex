@@ -2,119 +2,103 @@
 \chapter{Diskussion}
 \label{ch:diskussion}
 
-Dette kapitel diskuterer betydningen af de fund og de valg, der er
-beskrevet i kapitlerne om mekanik, elektrisk integration og
-idriftsættelse. Fokus er på, hvad resultaterne kan og ikke kan bruges
-til, hvilke kompromiser projektet har truffet, og hvad der er
-påbegyndt men ikke leveret.
-
 \section{Hvad step-respons-målingerne faktisk siger}
 
-Som beskrevet i afsnit~\ref{sec:hvad-maaler-vi} er den
-feedback-vinkel, commissioning-værktøjerne logger, identisk med den
-senest kommanderede vinkel for det pågældende led. Det er ikke en målt
-position fra servoens encoder. Konsekvensen er, at de
-rise time-, overshoot- og settling time-tal, der vil komme i bilaget
-efter lab-kørslerne, ikke karakteriserer ST3215-servoens interne
-regulator -- de karakteriserer \emph{kommando-vejen} fra GUI'en gennem
-ROS-topics og manager-noden, indtil den cachede position opdateres.
+Vinklen, commissioning-værktøjerne logger, er den samme som den
+senest kommanderede vinkel for det pågældende led. Det er ikke en
+målt værdi fra servoens encoder.
 
-Det betyder ikke, at tallene er værdiløse. De er meningsfulde som
-sammenligningsgrundlag mellem leddene: hvis tre led har næsten ens
-target-pipelines og ét led skiller sig ud, peger det på, at noget i
-manager-loopet eller i kommandobatchningen behandler det led
-anderledes. Men de kan ikke bruges til at sige noget om servoens
-mekaniske dynamik, dens evne til at holde en position under last,
-eller dens reelle settling-opførsel.
+Rise time, overshoot og settling time, der står i bilaget, beskriver
+derfor kommandovejen fra GUI'en gennem ROS-topics og manager-noden,
+indtil den gemte position opdateres. De beskriver ikke
+ST3215-servoens interne regulator.
+
+Tallene kan stadig bruges til at sammenligne leddene indbyrdes. Hvis
+tre led har næsten ens kommandoveje og ét skiller sig ud, peger det
+på, at manager-loopet behandler det led anderledes.
+
+Det er det eneste, de bruges til. De siger intet om, hvor godt
+servoen holder en position under last, og intet om dens reelle
+settling-opførsel.
 
 \section{Open-loop på ROS-niveau som design-valg}
 
-ROS-laget videresender bare positionskommandoer ud til servoerne og
-laver ikke nogen regulering selv. ST3215-servoen kører sin egen PID-sløjfe
-internt, og PID-gainsne i JSON-konfigurationen er Energinets standardværdier. Da
-\enquote{feedback\_enabled} blev sat til \enquote{true} som test, blev
-armen øjeblikkeligt ustabil, og open-loop-konfigurationen blev derfor
-reetableret.
+ROS-laget videresender målpositioner og regulerer ikke selv. Hver
+ST3215-servo kører sin egen PID-sløjfe internt, og PID-værdierne i
+JSON-konfigurationen står uændret fra Energinets oprindelige
+opsætning.
 
-Konsekvensen for projektet er, at en kalibreret closed-loop
-positionsregulering på ROS-niveau ikke er leveret. Funktioner, der
-\emph{forudsætter} faktisk positions-feedback -- fx en
-per-led-effektmåling, som er diskuteret nedenfor -- kan derfor heller
-ikke leveres i den nuværende konfiguration.
+Da feedback-vejen blev forsøgt aktiveret som test, begyndte armen
+straks at oscillere. Konfigurationen blev sat tilbage til open-loop
+og er ikke ændret siden.
+
+En kalibreret closed-loop-regulering på ROS-niveau er derfor ikke
+leveret i dette projekt. Funktioner, der forudsætter målt position
+-- fx en per-led-effektmåling -- kan heller ikke leveres med den
+nuværende konfiguration.
 
 \section{Stabil portbinding}
 
-Tildelingen af USB-portene til de tre ESP32-bokse afhang tidligere af,
-hvilken rækkefølge boksene blev sat i, og hvilken rækkefølge
-operativsystemet enumererede dem i ved boot. Hvis kablerne blev sat
-i en anden rækkefølge end sidste gang, kunne manager-noden ende med
-at sende den venstre arms kommandoer til den højre arms ESP32 --
-uden at det gav nogen åbenlys fejl, fordi systemet \emph{kørte}, det
-kørte bare mod den forkerte arm.
-
-Med løsningen via \enquote{/dev/serial/by-path/} afhænger mappingen
-nu af, hvilken fysisk USB-port boksen sidder i, og ikke af om
-operatøren husker rækkefølgen. Det er en billig rettelse, der fjerner
-en hel klasse af fejl, som ellers først dukker op under demo eller
-efter en flytning. Detaljerne er dokumenteret i kapitel~\ref{ch:el}.
+Den rettelse, der gav mest værdi for tiden brugt, var den faste
+portbinding via \enquote{/dev/serial/by-path/}. Den fjerner en
+fejl, der ellers først dukker op under demo eller efter en
+flytning, og som ikke giver nogen fejlmelding, fordi systemet
+kører -- det kører bare mod den forkerte arm. Detaljerne står i
+kapitel~\ref{ch:el}.
 
 \section{Mekaniske grænser i 3D-printet arm}
 
 Armens funktionelle arbejdsrum er mindre end dens geometriske
-rækkevidde. I udstrakt pose med skulderen omkring 90\textdegree{} og
-albuen strakt observeres, at armen langsomt synker, selv når
-positionskommandoen holdes konstant. Dette er ikke en software-fejl:
-gravitationsmomentet på en fuldt udstrakt arm er stort, og når
-ST3215-servoen ikke længere kan holde imod, synker leddet.
+rækkevidde.
 
-Konsekvensen er, at præindspillede animations-sekvenser og demoer skal
-holdes inden for poser, hvor det statiske moment er moderat. Det er
-en konkret begrænsning, der ikke kommer fra software-laget, men fra
-materialevalget og servovalget i den oprindelige konstruktion.
+Med skulderen omkring 90\textdegree{} og albuen strakt observeres,
+at armen langsomt synker, selv når positionskommandoen holdes
+konstant. Det er ikke en softwarefejl. Gravitationsmomentet på en
+fuldt udstrakt arm er stort, og når ST3215-servoen ikke kan holde
+imod, giver leddet efter.
 
-\section{Påbegyndt, men ikke leveret: per-led-effektmåling}
+Forhåndsindspillede animations-sekvenser og demoer skal derfor
+holdes inden for poser, hvor det statiske moment er moderat.
+Begrænsningen kommer ikke fra software-laget, men fra materiale- og
+servovalget i den oprindelige konstruktion.
 
-Som del af commissioning-pakken blev der påbegyndt et værktøj til at
-måle og logge effektforbruget pr.~led. Formålet var at dokumentere
-termisk belastning og strømforbrug under forskellige bevægelses\-mønstre
-(armen i hvile, teleoperation i neutral pose, teleoperation med strakt
-arm samt animations\-afspilning) som understøttende data til
-diskussionen i denne rapport. Servoerne stiller selv spændings- og
-strøm\-aflæsninger til rådighed via servobussen, så det kræver ikke
-ekstra hardware -- alene en udvidelse af software-laget.
+\section{Aflæsning af strømforbruget}
 
-Værktøjet blev imidlertid fravalgt inden eksamenstesten. Aflæsningen
-ville lægge sig oven i den eksisterende trafik på den samme servobus,
-som armens positionskommandoer i forvejen bruger, og bussens
-gennemløb er allerede en flaskehals ved den valgte kontrolfrekvens.
-Den ekstra trafik forskød timingen så meget, at servoernes interne
-regulator begyndte at oscillere -- den samme observation som beskrevet
-under PID-konfigurationen i kapitel~\ref{ch:idrift}. Tradeoff'et stod
-altså mellem en stabil arm uden effektmåling og en effektmåling med
-ustabil arm, og det første blev valgt af demonstrationshensyn.
+Som del af commissioning-pakken blev der påbegyndt et værktøj til
+at aflæse strømforbruget på robotten -- pr.~led og samlet -- så det
+kunne logges, mens armen står stille, kører i teleoperation eller
+afspiller en animation.
 
-En realistisk videreførelse ville være at flytte aflæsningen ud i en
-langsommere baggrunds-måling i en separat tråd, så den ikke længere
-konkurrerer med kontrolloopets tids\-budget på bussen. Det er ikke
-implementeret i denne aflevering.
+ST3215-servoerne kan selv rapportere strøm og spænding tilbage
+gennem servobussen, så det krævede ikke ekstra hardware. Det
+krævede kun, at manager-noden begyndte at spørge servoerne om de
+værdier i tillæg til at sende positionskommandoer ud til dem.
 
-\section{Robusthed i værktøjs-laget}
+Da aflæsningen blev slået til, begyndte armen at oscillere. De
+ekstra kald lagde sig oven i positionskommandoerne på den samme
+servobus, og bussen er allerede en flaskehals ved den valgte
+kontrolfrekvens. Positionskommandoerne kom derfor ikke frem i tide.
 
-Launcher-GUI'en er ikke en kerne-komponent i robotten, men en
-integrations-flade mellem operatør og ROS-stak. De rettelser, den
-krævede under idriftsættelsen, var derfor primært
-integrations-rettelser: at SSH-login kun spørger om password én gang
-og ikke ved hvert kald; at stop-signaler bliver sendt korrekt ned i
-procestræet for de launch-filer, GUI'en starter; og en kontrol af,
-at den binær, Jetson'en faktisk kører, matcher den sidste committede
-kildekode (et tidligere mismatch mellem cached binær og kildetræ var
-årsag til en svær fejl at finde).
+Aflæsningen blev slået fra igen, og armen var stabil. En strømmåling
+pr.~led kan derfor ikke leveres med den nuværende konfiguration.
 
-Disse rettelser fandtes ved at køre den fulde start-stop-sekvens
-ende-til-ende på den faktiske hardware. Det er den afprøvningsform,
-der har været brugbar for launcher-GUI'en; enkeltkomponent-tests af
-de underliggende ROS-services siger ikke noget om, hvordan GUI'en
-starter og stopper dem under demobetingelser. Det er en del af baggrunden for at investere
-tid i et samlet betjeningspanel og en pre-flight-checkliste frem for
-at lade hver service starte i sit eget terminalvindue.
+\section{Launcher-GUI'en}
+
+Launcher-GUI'en er en betjeningsflade mellem operatør og
+ROS-stakken. Den er ikke en del af robottens kontrolloop, og
+rettelserne, den krævede under idriftsættelsen, drejede sig om
+integrationen med omgivelserne:
+
+\begin{itemize}
+    \item Adgangskoden skal kun spørges om én gang pr.~service og
+          ikke ved hvert ROS-launch, så et sammenhængende
+          demo-forløb kan gennemføres.
+    \item Stop-signaler skal nå hele vejen ned i procestræet for de
+          launch-filer, GUI'en starter, så GUI'en lukker rent uden
+          at efterlade kørende noder.
+\end{itemize}
+
+Fejlene blev fundet ved at køre den fulde start-stop-sekvens på den
+faktiske hardware. At teste hver ROS-service for sig siger ikke
+noget om, hvordan GUI'en starter og stopper dem under en demo.
 

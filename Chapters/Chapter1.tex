@@ -4,123 +4,143 @@
 
 \section{Baggrund}
 
-Denne rapport er udarbejdet i forbindelse med praktikforløb hos Teknologisk
-Institut som del af uddannelsen til automationsteknolog ved UCL Erhvervsakademi
-og Professionshøjskole. Teknologisk Institut har overtaget et projekt fra Energinet som har startet udvikling af en fuldt 3D-printet humanoid robot under navnet \emph{Wattson}.
-Robotten består udelukkende af 3D-printede mekaniske komponenter samt
-standardelektronik (servoer, mikrocontrollere og en Jetson-baseret styreenhed),
-og den drives af en eksisterende softwarestak baseret på ROS~2. Wattson er
-oprindeligt udviklet med henblik på vedligeholds- og inspektionsopgaver i
-højspændingsanlæg, hvor en menneskeformet robotmorfologi gør det muligt at
-færdes i den eksisterende, menneskeskabte infrastruktur uden at miljøet skal
-ombygges.
+Denne rapport er udarbejdet i forbindelse med praktikforløb hos
+Teknologisk Institut som del af uddannelsen til automationsteknolog
+ved UCL Erhvervsakademi og Professionshøjskole.
 
-Den oprindelige robot blev udviklet over ca.\ ét år af to personer, og både
-mekanisk design, elektrisk integration og softwarearkitektur er dokumenteret
-i et offentligt tilgængeligt git-repository. Da hardwaren er fuldt 3D-printet,
-er det i princippet muligt at fremstille en kopi af robotten ud fra de
-eksisterende filer. I praksis kræver det dog en betydelig
-integrationsindsats, før de printede dele, elektronikken og softwaren udgør
-et fungerende system.
+\begin{wrapfigure}[14]{r}{0.30\textwidth}
+    \centering
+    \vspace{0.4em}
+    \includegraphics[width=0.28\textwidth]{IMG20260613210156.jpg}
+    \caption{Wattson.}
+    \label{fig:wattson-oversigt}
+\end{wrapfigure}
 
-Min opgave i praktikken har været at gennemføre denne integrationsindsats:
-at fremstille de mekaniske dele, samle dem, integrere elektronikken, idriftsætte
-softwaren og dokumentere processen, så resultatet kan anvendes som udgangspunkt
-for videre udvikling hos Teknologisk Institut.
+Teknologisk Institut viderefører et projekt, som Energinet
+startede, om en fuldt 3D-printet humanoid robot ved navn Wattson.
+Robotten består af 3D-printede mekaniske dele og standardelektronik
+(servoer, mikrocontrollere og en Jetson-baseret styreenhed). Den
+drives af en eksisterende ROS\,2-software-stak.
+
+Wattson er oprindeligt tænkt til vedligeholds- og
+inspektionsopgaver i højspændingsanlæg. En menneskeformet robot kan
+færdes i den eksisterende infrastruktur, uden at anlæggene skal
+bygges om.
+
+Den oprindelige robot blev udviklet over ca.~ét år af to personer.
+Både mekanisk design, elektrisk integration og softwarearkitektur
+ligger i et offentligt git-repository. Hardwaren er fuldt
+3D-printet, så det er i princippet muligt at fremstille en kopi ud
+fra de eksisterende filer.
+
+I praksis kræver det dog en betydelig integrationsindsats, før de
+printede dele, elektronikken og softwaren udgør et fungerende
+system. Opgaven i praktikken har været at gennemføre den
+integration: fremstille de mekaniske dele, samle dem, integrere
+elektronikken, idriftsætte softwaren og dokumentere processen, så
+resultatet kan bruges som udgangspunkt for videre udvikling hos
+Teknologisk Institut.
 
 \clearpage
 \section{Problemformulering}
 
-Hvordan kan en humanoid robot, baseret på eksisterende 3D-design og software,
-fremstilles, samles og integreres til en funktionel enhed, hvor mekaniske og
-elektriske systemer korrekt understøtter robottens bevægelser?
+Hvordan kan en humanoid robot, baseret på eksisterende 3D-design og
+software, fremstilles, samles og integreres til en funktionel
+enhed, hvor mekaniske og elektriske systemer korrekt understøtter
+robottens bevægelser?
 
 Projektet omfatter:
 
 \begin{itemize}
     \item 3D-print og efterbehandling af robottens komponenter
     \item Mekanisk samling af robottens delsystemer
-    \item Elektrisk opbygning og korrekt wiring af aktuatorer og styresystem
+    \item Elektrisk opbygning og korrekt wiring af aktuatorer og
+          styresystem
     \item Integration og afprøvning af eksisterende software
 \end{itemize}
 
-Der arbejdes med at sikre korrekt samspil mellem systemets delkomponenter samt
-mulighed for tilpasning og optimering af udvalgte komponenter og styring med
-henblik på at forbedre funktionalitet og stabilitet.
+Der arbejdes med at sikre korrekt samspil mellem delkomponenterne
+og med mulighed for tilpasning af udvalgte komponenter og styring,
+så funktionalitet og stabilitet forbedres.
 
 \section{Afgrænsning}
 
-Projektet afgrænses til at fokusere på udvikling, fremstilling og integration
-af en humanoid robotarm som et selvstændigt delsystem.
+Projektet er afgrænset til en humanoid robotarm som et selvstændigt
+delsystem. Armen er valgt, fordi den indeholder de centrale
+mekaniske og styringsmæssige udfordringer: bevægelse i flere led,
+belastning af komponenter og koordinering af flere aktuatorer.
 
-Robotarmen er valgt som fokusområde, da den indeholder centrale mekaniske og
-styringsmæssige udfordringer, herunder bevægelse i flere led, belastning af
-komponenter samt koordinering af aktuatorer.
+Hele den humanoide robot færdiggøres derfor ikke. Der arbejdes
+modulært, så det færdige delsystem kan indgå i det samlede
+robotsystem senere.
 
-Projektet vil derfor ikke nødvendigvis omfatte en fuld færdiggørelse af hele
-den humanoide robot, men der arbejdes med en modulær tilgang.
-
-% Uddybende afgrænsning -- ændrer ikke scope, præciserer hvad der ligger uden for.
 Følgende dele af robotten behandles ikke i rapporten:
 
 \begin{itemize}
     \item Den modsatte arm, torso, hofteparti, ben og hoved
-    \item Teleoperation via VR-udstyr (Quest~3 og ZED-kamera), som det
-          eksisterende softwaresystem understøtter
+    \item Teleoperation via VR-udstyr (Quest~3 og ZED-kamera), som
+          det eksisterende softwaresystem understøtter
     \item Invers kinematik og bevægelsesplanlægning på systemniveau
 \end{itemize}
 
-Hvis dele af det øvrige system er færdige ved eksamenstidspunktet, kan de
-demonstreres mundtligt, men de udgør ikke en del af den skriftlige
-bedømmelse.
-
 \section{Målgruppe}
 
-Projektet henvender sig primært til teknikere og fagpersoner inden for
-automation og robotteknologi, som arbejder med opbygning, integration og
-idriftsættelse af robotsystemer.
-
-Fokus er på en praktisk og teknisk formidling.
+Rapporten henvender sig til teknikere og fagpersoner inden for
+automation og robotteknologi, som arbejder med opbygning,
+integration og idriftsættelse af robotsystemer. Formidlingen er
+praktisk og teknisk.
 
 \clearpage
 \section{Metode}
 
-Projektet er gennemført som et idriftsættelsesforløb: et eksisterende
-design omsættes til en fungerende fysisk enhed gennem fremstilling, samling,
-elektrisk integration og softwarekonfiguration. Arbejdet er foregået iterativt
--- når et problem opstod under samling eller test, blev årsagen diagnosticeret
-og en løsning implementeret. De vigtigste af disse
-hændelser er medtaget i rapporten, fordi de illustrerer de praktiske
-konsekvenser af at bygge med 3D-printede komponenter og af at integrere et
-eksisterende, kun delvist dokumenteret softwaresystem.
+Projektet er gennemført som et idriftsættelsesforløb. Et
+eksisterende design er omsat til en fungerende fysisk enhed gennem
+fremstilling, samling, elektrisk integration og
+softwarekonfiguration.
 
-Ud over selve idriftsættelsen omfatter projektet en række tilføjelser
-til det oprindelige system, som er udviklet for at gøre det praktisk at arbejde
-med: stabil portbinding for de tilsluttede mikrocontrollere, en
-samlet betjenings-GUI til opstart og demo, samt en commissioning-pakke
-med værktøjer til at måle og dokumentere armens opførsel. Disse
-tilføjelser er beskrevet i de relevante kapitler sammen med de
-problemer, der motiverede dem.
+Arbejdet er foregået iterativt. Når et problem opstod under samling
+eller test, blev årsagen diagnosticeret, og en løsning blev
+implementeret. De vigtigste af disse hændelser er medtaget i
+rapporten, fordi de viser de praktiske konsekvenser af at bygge med
+3D-printede komponenter og af at integrere et eksisterende, kun
+delvist dokumenteret softwaresystem.
+
+Ud over selve idriftsættelsen er der udviklet en række tilføjelser
+til det oprindelige system. De er lavet for at gøre det praktisk at
+arbejde med robotten: stabil portbinding for de tilsluttede
+mikrocontrollere og en samlet betjenings-GUI til opstart og demo.
+Dertil kommer en commissioning-pakke med værktøjer til at måle og
+dokumentere armens opførsel. Tilføjelserne er beskrevet i de
+relevante kapitler sammen med de problemer, der motiverede dem.
+
+Test og afprøvning af software-tilføjelserne er foregået på den
+oprindelige Wattson-robot, der har stået til rådighed under hele
+forløbet. Det har gjort det muligt at idriftsætte og verificere
+ændringerne på en fungerende platform, mens replicaen blev
+fremstillet og samlet. Når replicaen er færdig, kan den samme
+softwarekonfiguration overføres til den.
 
 \section{Rapportens opbygning}
 
 Rapporten er opbygget som følger:
 
 \begin{itemize}
-    \item \textbf{Kapitel~\ref{ch:teori}} -- den baggrundsviden, der
-          anvendes senere i rapporten: seriebus-servoer som integrations-
-          komponent, ROS\,2 som kommunikationsplatform samt egenskaberne
-          ved 3D-printede konstruktionsdele.
-    \item \textbf{Kapitel~\ref{ch:analyse}} -- det eksisterende system og
-          begrundelse for afgrænsningen til én arm.
-    \item \textbf{Kapitel~\ref{ch:mekanik}} -- den mekaniske fremstilling
-          og samling.
-    \item \textbf{Kapitel~\ref{ch:el}} -- elektrisk integration og wiring.
-    \item \textbf{Kapitel~\ref{ch:idrift}} -- idriftsættelse, herunder
-          softwareopsætning, kalibrering og test.
-    \item \textbf{Kapitel~\ref{ch:diskussion}} -- konsekvenserne af at have
-          bygget armen udelukkende i 3D-printede dele.
+    \item \textbf{Kapitel~\ref{ch:teori}} -- baggrundsviden:
+          seriebus-servoer, ROS\,2 som kommunikationsplatform og
+          egenskaberne ved 3D-printede konstruktionsdele.
+    \item \textbf{Kapitel~\ref{ch:analyse}} -- det eksisterende
+          system og begrundelse for afgrænsningen til én arm.
+    \item \textbf{Kapitel~\ref{ch:mekanik}} -- mekanisk
+          fremstilling og samling.
+    \item \textbf{Kapitel~\ref{ch:el}} -- elektrisk integration og
+          wiring.
+    \item \textbf{Kapitel~\ref{ch:idrift}} -- softwareopsætning,
+          kalibrering, commissioning-værktøjer og test.
+    \item \textbf{Kapitel~\ref{ch:diskussion}} -- diskussion af de
+          centrale valg og fund fra idriftsættelsen.
     \item \textbf{Kapitel~\ref{ch:konklusion}} -- besvarelse af
           problemformuleringen.
-    \item \textbf{Kapitel~\ref{ch:perspektivering}} -- det videre arbejde.
+    \item \textbf{Kapitel~\ref{ch:perspektivering}} -- det videre
+          arbejde.
 \end{itemize}
+

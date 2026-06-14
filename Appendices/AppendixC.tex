@@ -1,0 +1,75 @@
+% Appendix C -- Procedurer
+
+\chapter{Procedurer}
+\label{AppendixC}
+
+Dette bilag samler de praktiske procedurer, der bruges til at
+idriftsætte, opstarte og fejlsøge robotten i den konfiguration, som
+rapporten omfatter. Procedurerne er en opdatering af det eksisterende
+materiale, som indgår i workspace-repositoriet.
+
+% ---------------------------------------------------------------------
+\section{Opstartsprocedure (opdateret)}
+\label{sec:appC-opstart}
+
+% TODO: Den opdaterede opstartsprocedure for robotten:
+%  - kabel-tjekliste (forsyning, USB-bokse på korrekt port)
+%  - launch-rækkefølge (servos.launch.py før slider_control osv.)
+%  - validering: hvordan man bekræfter at hver arm reagerer korrekt
+%  - sikkerhedshensyn (forsyning slukket før kabelændringer)
+
+\textit{Indhold tilføjes -- baseres på den eksisterende opstartsprocedure
+i workspace-repositoriet, opdateret med ændringerne fra
+kapitel~\ref{ch:el} og kapitel~\ref{ch:idrift}.}
+
+% ---------------------------------------------------------------------
+\section{Portbinding -- procedure}
+\label{sec:appC-portbinding}
+
+% TODO: Trin-for-trin procedure for at finde og verificere
+% /dev/serial/by-path/-stier til hver ESP32-kontroller:
+%  - kommandoer (udls -l /dev/serial/by-path/, dmesg | grep tty osv.)
+%  - hvordan man identificerer hvilken sti der svarer til hvilken farve
+%  - hvordan manager-nodens konfiguration opdateres med de nye stier
+% Selve konfigurationsfilen ligger i Bilag~\ref{AppendixB},
+% afsnit~\ref{sec:appB-portbinding}.
+%
+% TODO ALEX: bekræft port-til-kabel-mapping mod den fysiske montage.
+% Foreløbig mapping (skal verificeres):
+%   Port 2.2 -- GULT kabel  -- venstre arm
+%   Port 2.3 -- RØDT kabel  -- højre arm og hoved
+%   Port 2.1 -- HVIDT kabel -- hænder
+
+\textit{Indhold tilføjes.}
+
+% ---------------------------------------------------------------------
+\section{Kalibrerings- og idriftsættelsesprocedure}
+\label{sec:appC-kalibrering}
+
+% TODO: Procedure for at sætte hver servo i defaultposition og
+% kontrollere software-grænser (jf.~Tabel~\ref{tab:kalibrering-tab}
+% i Bilag~\ref{AppendixA}).
+
+\textit{Indhold tilføjes.}
+
+% ---------------------------------------------------------------------
+\section{Kendte fejlbilleder og afhjælpning}
+\label{sec:appC-fejlbilleder}
+
+% TODO: Liste over de fejlbilleder, der er observeret under
+% idriftsættelsen, og hvordan de afhjælpes:
+%  - "armen kører til forkert position" -> tjek by-path-mapping
+%  - "armen oscillerer" -> feedback_enabled må ikke stå til true
+%  - "ESP32 svarer ikke" -> tjek USB-forbindelse og strømforsyning
+
+\textit{Indhold tilføjes.}
+
+% ---------------------------------------------------------------------
+\section{Opdaterede README-filer}
+\label{sec:appC-readme}
+
+% TODO: De README-filer der er ændret/opdateret i workspace-pakkerne
+% som del af projektet. Indsæt enten som verbatim-blokke eller som
+% kort referat med markering af hvad der er ændret.
+
+\textit{Indhold tilføjes.}

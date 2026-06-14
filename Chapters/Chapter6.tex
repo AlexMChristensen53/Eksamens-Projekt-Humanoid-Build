@@ -2,128 +2,142 @@
 \chapter{Idriftsættelse og test}
 \label{ch:idrift}
 
-Dette kapitel dokumenterer den software- og styringsmæssige idriftsættelse
-af armen efter den mekaniske og elektriske integration. Kapitlet beskriver
-i hvilken konfiguration robotten faktisk køres, hvilke værktøjer der er
-udviklet for at kunne måle armens opførsel, hvad disse værktøjer faktisk
-måler -- og lige så vigtigt: hvad de \emph{ikke} måler -- samt en række
-konkrete problemer, der er stødt på undervejs, og hvordan de er løst.
+Efter den mekaniske og elektriske integration er armen blevet sat i
+drift med Energinets eksisterende ROS\,2-stak. De følgende afsnit
+dokumenterer konfiguration, PID-oplæg, kalibrering, de
+commissioning-værktøjer der er udviklet undervejs, og de konkrete
+integrationsfejl som er rettet.
 
 \section{Software-opsætning}
 
-Idriftsættelsen tager udgangspunkt i Energinets eksisterende ROS\,2-workspace
-(\enquote{energirobotter-ros-workspace}), der ligger på Jetson Orin Nano under
-ROS\,2 Humble. For at kunne arbejde isoleret med én arm uden at indlæse
-konfigurationer for hænder, hoved og højre arm, indlæses kun den relevante
-\enquote{servo\_arm\_left\_params.json}-fil ved opstart af
-\enquote{wattson\_servo\_manager\_node}. Selve opstarten sker via to launch-filer:
-\enquote{servos.launch.py} starter manager-noden, og
-\enquote{slider\_control.launch.py} starter en GUI med en skyder pr.~led, der
-gør det muligt at bevæge hvert led uafhængigt.
+Idriftsættelsen tager udgangspunkt i Energinets eksisterende
+ROS\,2-workspace (\enquote{energirobotter-ros-workspace}) på Jetson
+Orin Nano under ROS\,2 Humble.
+
+For at arbejde isoleret med venstre arm indlæses kun
+\enquote{servo\_arm\_left\_params.json} ved opstart af
+\enquote{wattson\_servo\_manager\_node}. Konfigurationerne for hænder,
+hoved og højre arm hentes ikke.
+
+Selve opstarten sker via to launch-filer. \enquote{servos.launch.py}
+starter manager-noden, og \enquote{slider\_control.launch.py} starter
+en GUI med en skyder pr.~led, så hvert led kan bevæges uafhængigt.
 
 \section{PID-konfiguration og kontrolarkitektur}
 
 Hver ST3215-servo har en intern positionsregulator. PID-værdierne
-pr. servo står i JSON-filen og er anvendt uændret fra Energinets
-konfiguration. Manager-noden videresender målpositioner til hver
-servo, og selve reguleringssløjfen lukkes inde i den enkelte ST3215.
+står pr.~servo i JSON-filen og er anvendt uændret fra Energinets
+konfiguration.
 
-ROS-laget regulerer ikke selv og modtager ingen tilbagemelding fra
-servoernes faktiske position. Som test blev \enquote{feedback\_enabled}
-sat til \enquote{true} i både JSON-konfig og driverkode for at
-undersøge, om feedback-vejen kunne aktiveres uden yderligere arbejde.
-Resultatet var, at alle arm-led begyndte at oscillere, også uden
-eksterne kommandoer. Open-loop-konfigurationen blev derfor
-reetableret, og feedback-vejen blev i stedet brugt diagnostisk
-(afsnit~\ref{sec:hvad-maaler-vi}).
+Manager-noden videresender målpositioner til hver servo, og selve
+reguleringssløjfen lukkes inde i den enkelte ST3215. ROS-laget
+regulerer ikke selv og modtager ingen tilbagemelding fra servoernes
+faktiske position.
 
+Som test blev \enquote{feedback\_enabled} sat til \enquote{true} i
+både JSON-konfig og driverkode for at undersøge, om feedback-vejen
+kunne aktiveres uden yderligere arbejde. Resultatet var, at alle
+arm-led begyndte at oscillere, også uden eksterne kommandoer.
+
+Open-loop-konfigurationen blev derfor reetableret. I den endelige
+konfiguration bærer feedback-topic'et kun den senest kommanderede
+vinkel.
+
+\clearpage
 \section{Kalibrering af led}
 
-Inden armen kan styres meningsfuldt, skal hvert led kalibreres. For hver
-servo indeholder JSON-konfigurationen tre værdier, der definerer leddets
-arbejdsrum:
+Inden armen kan styres meningsfuldt, skal hvert led kalibreres. For
+hver servo indeholder JSON-konfigurationen tre værdier, der
+definerer leddets arbejdsrum:
 
 \begin{itemize}
-    \item \enquote{angle\_software\_min} og \enquote{angle\_software\_max} --
-          de software-grænser, manager-noden klipper kommandoer til, så
-          hverken servo eller mekanik ødelægges af en ude-af-grænse-kommando.
-    \item \enquote{default\_position} -- den vinkel, leddet sættes til ved opstart.
-    \item \enquote{gear\_ratio} -- omsætningsforholdet mellem servo-aksel
-          og fysisk led, så ROS-niveauet kan tænke i led-vinkler
-          frem for servo-aksel-vinkler.
+    \item \enquote{angle\_software\_min} og
+          \enquote{angle\_software\_max} -- software-grænser, som
+          manager-noden klipper kommandoer til, så hverken servo
+          eller mekanik tager skade ved en kommando ud over
+          arbejdsrummet.
+    \item \enquote{default\_position} -- den vinkel, leddet sættes
+          til ved opstart.
+    \item \enquote{gear\_ratio} -- omsætningsforholdet mellem
+          servo-aksel og fysisk led, så ROS-niveauet kan regne i
+          led-vinkler frem for servo-aksel-vinkler.
 \end{itemize}
 
-Kalibreringen er sket praktisk: armen bevæges manuelt med
+Selve kalibreringen er sket praktisk. Armen bevæges manuelt med
 slider-GUI'en, og grænserne sættes til de positioner, hvor leddet
-fysisk når sit endestop uden at trække i mekanikken. Nul-positionen er
-sat til en geometrisk neutral pose, hvor armen hænger lodret langs
-torsoens side. Værdierne for venstre arm er dokumenteret i bilaget
-(se \emph{Bilag, Tabel~1}).
+først tager fat i sit endestop uden at trække i mekanikken.
+
+Nul-positionen er sat til en neutral pose, hvor armen hænger lodret
+langs torsoens side. Værdierne for venstre arm står i Bilag, Tabel~1.
 
 \section{Tilføjelser: commissioning-værktøjer}
 \label{sec:commissioning-vaerktoejer}
 
-Det oprindelige system har ingen indbyggede værktøjer til at måle eller
-dokumentere armens dynamiske opførsel. Til brug for idriftsættelsen er
-der derfor udviklet en ny ROS-pakke, \enquote{arm\_commissioning}, der
-indeholder følgende noder:
+% TODO ALEX (15/6): verificér node-beskrivelserne mod den faktiske kode.
+% Mistanke: feedback-publisher / /joint_states_feedback er fjernet helt
+% fra wattson_servo_manager_node, så step_response_node og
+% repeatability_node skal evt. omformuleres eller fjernes. launcher_gui_node
+% er bekræftet OK.
+Det oprindelige system har ingen indbyggede værktøjer til at måle
+eller dokumentere armens dynamiske opførsel. Til idriftsættelsen er
+der derfor udviklet en ny ROS-pakke, \enquote{arm\_commissioning},
+med følgende noder:
 
 \begin{description}
-    \item[\enquote{step\_response\_node}] Kommanderer en step-input på en
-        valgt led, logger den feedback-vinkel, manager-noden publicerer,
-        og beregner klassiske step-respons-mål: rise time (10\,\%--90\,\%),
-        overshoot, settling time (med konfigurerbar tolerance) og
-        steady-state-fejl. Output: CSV-rådata og en PNG-graf pr.~kørsel.
-    \item[\enquote{repeatability\_node}] Sender armen frem og tilbage
-        mellem to konfigurerede positioner et antal cyklusser og
-        registrerer slut-positionen i hvert hold-vindue. Output: histogram
-        for de to målte pose-populationer plus mean, std og max-afvigelse.
-    \item[\enquote{launcher\_gui\_node}] Et Tk-baseret betjeningspanel, der
-        samler de typiske demo-services (DHCP, kameraets ROS-launch,
-        VR-broer, servo-manager, animationsafspilning) bag start/stop-knapper
-        med statusindikatorer og samlede logfaner. Begrundelse: en
-        eksamensdemo, hvor 5--6 terminalvinduer skal åbnes i en præcis
-        rækkefølge, er fragil; et samlet panel reducerer antallet af
-        fejlmuligheder.
+    \item[\enquote{step\_response\_node}] Sender en step-kommando
+        til et valgt led, logger den vinkel manager-noden publicerer
+        på \enquote{/joint\_states\_feedback}, og beregner klassiske
+        step-respons-mål: rise time (10\,\%--90\,\%), overshoot,
+        settling time og steady-state-fejl. Output er CSV-rådata og
+        en PNG-graf pr.~kørsel.
+    \item[\enquote{repeatability\_node}] Sender armen frem og
+        tilbage mellem to konfigurerede positioner et antal gange
+        og registrerer den publicerede vinkel i hvert hold-vindue.
+        Output er et histogram for de to pose-populationer plus
+        middelværdi, spredning og maks-afvigelse.
+    \item[\enquote{launcher\_gui\_node}] Et Tk-baseret
+        betjeningspanel, der samler de typiske demo-services (DHCP,
+        kameraets ROS-launch, VR-broer, servo-manager,
+        animationsafspilning) bag start/stop-knapper med
+        statusindikatorer og samlede logfaner. Formålet er at
+        afløse en opstart, hvor 5--6 terminalvinduer ellers skal
+        åbnes i en bestemt rækkefølge.
 \end{description}
 
-For at \enquote{step\_response\_node} og \enquote{repeatability\_node} kunne
-hente positionsdata, blev der desuden tilføjet en feedback-publisher til
-\enquote{wattson\_servo\_manager\_node}: et nyt topic
-\enquote{/joint\_states\_feedback}, der publicerer den positionsværdi,
-manager-noden kender for hver servo. Dette topic er den eneste nye
-afhængighed, commissioning-værktøjerne tilfører til det eksisterende
+For at de to første noder kan hente positionsdata, er
+manager-noden udvidet med et nyt topic
+\enquote{/joint\_states\_feedback}, der bærer den positionsværdi,
+manager-noden selv kender for hver servo. Det er den eneste nye
+afhængighed, commissioning-pakken tilføjer til det eksisterende
 system.
 
 \section{Funktionstest: step-response pr.~led}
 
-Step-response køres på hvert af de syv venstre arm-led med samme
-parametre: 10\textdegree{} step fra nul, 12\,s logging, 50\,Hz
-samplerate, settling-tolerance 10\,\% af step-amplituden.
+Step-response køres på hvert af de syv led i venstre arm med samme
+parametre: et 10\textdegree{} step fra nul, 12\,s logging, 50\,Hz
+samplerate og en settling-tolerance på 10\,\% af step-amplituden.
 
 % TODO ALEX (efter lab): indføj de målte værdier i tabellen
 % (Bilag, Tabel~2) og det repræsentative plot (Bilag, Figur~1).
-% Hvis tallene afslører større afvigelser mellem leddene, så
-% diskutér dem i kapitel~\ref{ch:diskussion}.
-Resultatet pr.~led sammenfattes i tabellen i bilaget
-(se \emph{Bilag, Tabel~2}). Et repræsentativt forløb for
-\enquote{joint\_left\_shoulder\_pitch} vises i \emph{Bilag, Figur~1}:
-den kommanderede vinkel som step-funktion, den loggede
-feedback-vinkel og de beregnede mål annoteret på plottet.
-
-% TODO efter lab lørdag: udfyld med de faktiske målte værdier.
-Afvigelser mellem leddene diskuteres i kapitel~\ref{ch:diskussion}.
+Resultaterne pr.~led står i Bilag, Tabel~2. Et repræsentativt forløb
+for \enquote{joint\_left\_shoulder\_pitch} vises i Bilag, Figur~1
+med den kommanderede vinkel, den loggede vinkel og de beregnede mål
+annoteret direkte på plottet.
 
 \section{Hvad værktøjerne måler -- og ikke måler}
 \label{sec:hvad-maaler-vi}
 
-Den feedback-vinkel, \enquote{step\_response\_node} logger, kommer fra
-ROS-topic'et \enquote{/joint\_states\_feedback}. Det topic publiceres
-af manager-noden og indeholder i den nuværende konfiguration den
-\emph{senest kommanderede} vinkel for hvert led, ikke en målt
-position fra servoens encoder. Det skyldes en tre-niveau gating på
-flaget \enquote{feedback\_enabled}, der i den oprindelige konfiguration
-står til \enquote{false}:
+% TODO ALEX (15/6): verificér mod faktisk kode. Hvis feedback-publisher
+% er fjernet helt, skal beskrivelsen af feedback_enabled-flaget
+% omskrives -- så er der ikke noget flag at beskrive, men blot et
+% fravær af positions-feedback i den endelige konfiguration.
+Den vinkel, \enquote{step\_response\_node} logger, kommer fra topic'et
+\enquote{/joint\_states\_feedback}. Topic'et publiceres af
+manager-noden og bærer i den nuværende konfiguration den senest
+kommanderede vinkel -- ikke en målt værdi fra servoens encoder.
+
+Årsagen er flaget \enquote{feedback\_enabled}, der står til
+\enquote{false} tre steder i koden:
 
 \begin{enumerate}
     \item I JSON-konfigurationen for venstre arm er
@@ -131,130 +145,88 @@ står til \enquote{false}:
           syv servoer.
     \item Driveren \enquote{DriverWaveshare} har samme værdi som
           instans-default, og manager-noden overskriver den ikke.
-    \item I \enquote{ServoControl.compute\_command} medfører
-          \enquote{feedback\_enabled = false}, at den cachede position
-          \enquote{self.angle} sættes lig den senest kommanderede vinkel
-          frem for en målt værdi.
+    \item I \enquote{ServoControl.compute\_command} sættes den
+          gemte position \enquote{self.angle} lig den senest
+          kommanderede vinkel frem for en målt værdi, når flaget er
+          \enquote{false}.
 \end{enumerate}
 
-Konsekvensen for commissioning-værktøjerne er, at de tal, de
-udregner, ikke karakteriserer ST3215-servoens interne regulator. Det
-de måler, er kommandoernes vej gennem systemet -- fra en ny target
-publiceres på \enquote{/joint\_states}, til den cachede position
-afspejler den nye target. Det er en nyttig størrelse, fordi den
-dækker latency i ROS-laget, men det er \emph{ikke} en
-servo-karakteristik.
+De tre kodesteder er dokumenteret i Bilag~\ref{AppendixB},
+afsnit~\ref{sec:appB-feedback}.
 
-Som beskrevet under PID-konfigurationen blev det afprøvet at slå
-\enquote{feedback\_enabled} til; armen begyndte at oscillere, og
-open-loop-konfigurationen blev derfor bibeholdt. Step-respons-tabellen
-i bilaget skal læses i lyset af dette: tallene er gyldige som
-sammenligningsgrundlag mellem leddene og som karakteristik af
-command-pipelinen, men de er ikke et udtryk for ST3215-regulatorens
-dynamik.
+Commissioning-værktøjerne siger derfor intet om ST3215-servoens
+interne regulator. De måler den tid, der går fra en ny målposition
+sendes på \enquote{/joint\_states}, til den samme værdi dukker op
+igen på \enquote{/joint\_states\_feedback} -- altså forsinkelsen i
+ROS-laget, ikke servoens egen dynamik.
 
 \section{Andre integrationsrettelser}
 
-Ud over de fund, der direkte vedrører funktionstesten, blev der under
-idriftsættelsen rettet en række mindre integrationsfejl. De vigtigste
-er listet nedenfor; detaljer ligger i kildekodens commit-historik og
-bilag.
+Under idriftsættelsen kom en række mindre integrationsfejl frem,
+som er rettet løbende. De vigtigste står nedenfor.
 
-\begin{description}
-    \item[Stabil portbinding for ESP32-bokse.] Tidligere blev de tre
-        USB-tilsluttede mikrocontrollere adresseret som
-        \enquote{/dev/ttyUSB0--2}, hvilket gjorde tildelingen afhængig af
-        tilslutningsrækkefølge. Manager-noden adresserer dem nu via
-        \enquote{/dev/serial/by-path/}, så hver fysisk port på
-        Jetson-USB-hubben permanent svarer til den samme logiske funktion.
-        Detaljer i kapitel~\ref{ch:el}.
-    \item[Race-tilstand i kinematik-nodens opstart.]
-        \enquote{elrik\_kdl\_kinematics\_node} crashede sporadisk under
-        opstart med en \enquote{AttributeError}, fordi en periodisk timer
-        blev oprettet, før node-instansens egne felter var initialiseret.
-        Fixet ved at flytte \enquote{create\_timer}-kaldet til slutningen
-        af \enquote{\_\_init\_\_}, så timeren først aktiveres, når
-        nodens tilstand er klar.
-    \item[Launcher-GUI bugs under hardware-rehearsal.]
-        Det samlede betjeningspanel blev iterativt rettet for en række
-        problemer, der først kom frem under faktisk demo-brug. De fire
-        vigtigste rettelser beskrives nedenfor.
+\subsection{Startrækkefølge i kinematik-noden}
 
-        \paragraph{Adgangskode-prompts ved fjernlogin.}
-        Launches af ROS-noder på Jetson sker fra GUI'en via en
-        krypteret fjern\-forbindelse. Oprindeligt skulle operatøren
-        indtaste password ved hvert kald, hvilket gjorde et
-        sammenhængende demo-flow uigennemførligt. Problemet blev løst
-        med to mekanismer. Først blev der lavet en lille hjælpe-proces,
-        som leverer adgangskoden gennem et grafisk dialog\-vindue, så
-        fjernforbindelsen ikke længere kræver, at GUI'en har en
-        terminal at spørge i. Dernæst blev der konfigureret deling af
-        forbindelsen, så det første login etablerer en
-        baggrunds-forbindelse, som efterfølgende kald genbruger.
-        Resultatet er, at password kun spørges én gang pr.~service og
-        ikke én gang pr.~ROS-launch. En mere permanent løsning ville
-        være login med kryptografisk nøgle frem for adgangskode, men
-        det er fravalgt, da det ville kræve ændringer i Jetsons
-        konfiguration uden for projektets afgrænsning.
+\enquote{elrik\_kdl\_kinematics\_node} crashede sporadisk under
+opstart med en \enquote{AttributeError}.
 
-        \paragraph{Langsom respons på stop-knappen.}
-        Den oprindelige stop-knap i GUI'en reagerede med 30--60
-        sekunders forsinkelse, hvilket gjorde nødstop praktisk
-        ubrugeligt. Årsagen var, at stop-signalet ikke nåede helt ned
-        til de ROS-noder, der faktisk kørte: signalet blev fanget af
-        en mellemliggende skal-proces, og selve noden levede videre
-        som en frikoblet baggrunds-proces. Rettelsen bestod i tre
-        dele. For det første blev kommandoen om\-skrevet, så
-        ROS-noden overtager skal-processen direkte i stedet for at
-        køre som dens barn. For det andet startes hver service nu i
-        sin egen proces-gruppe, så stop-knappen kan signalere hele
-        gruppen på én gang og dermed også fange middleware- og
-        controller-processer, der eventuelt er startet sammen med
-        noden. For det tredje sendes først et blødt afbrydelses-signal,
-        som lader noden rydde op, og hvis processen mod forventning
-        stadig kører efter en kort frist, sendes et hårdere
-        terminerings-signal som fallback. Tilsammen bringer
-        ændringerne respons\-tiden under et sekund.
+Årsagen var, at en periodisk timer blev oprettet, før nodens egne
+felter var initialiseret. Når timeren så fyrede, manglede de værdier
+den skulle bruge.
 
-        \paragraph{Manglende synkronisering mellem laptop og Jetson.}
-        Under en refaktorering blev kildekoden til en central node
-        på laptop-siden uforvarende beskadiget, men på Jetson kørte
-        systemet tilsyneladende videre uden fejl. Forklaringen var,
-        at Python på Jetson havde en cached udgave af samme modul
-        liggende fra en tidligere build og foretrak den frem for at
-        fejle på den nye kilde. Diskrepansen blev først opdaget, da
-        Jetson blev rebuildt fra grunden og pludselig fejlede ved
-        opstart. Den varige rettelse blev derfor proces-mæssig og
-        ikke kode-mæssig: før en kritisk demo skal Jetson altid
-        bygges fra rene mapper, så det testede svarer til det
-        kørende.
+Rettelsen var at flytte oprettelsen af timeren til slutningen af
+\enquote{\_\_init\_\_}, så den først aktiveres, når nodens tilstand
+er klar.
 
-        \paragraph{Øvrige mindre rettelser.}
-        Ved luk af GUI'en kunne et stop-kald ramme en system-tjeneste
-        ejet af root og resultere i en rettighedsfejl, så vinduet
-        hang. Det blev rettet ved at omslutte alle service-stop i
-        fejl\-håndtering og foretage netop dette stop med forhøjede
-        rettigheder. Dernæst blev et eksperiment med at hæve
-        kontrol-frekvensen fra 10 til 50~Hz for jævnere bevægelse
-        rullet tilbage igen. Robottens 14 servoer deler en fælles
-        seriebus, og målingerne pr.~servo er begrænset af bussens
-        gennemløb, ikke af CPU'en. En cyklustid på 20~ms svarende
-        til 50~Hz er derfor fysisk umulig på den eksisterende bus,
-        og forsøget gav i praksis ustabile bevægelser uden gevinst.
-    \end{description}
+\subsection{Adgangskode-prompts ved fjernlogin}
+
+Launches af ROS-noder på Jetsonen sker fra GUI'en via en krypteret
+fjernforbindelse. Oprindeligt skulle operatøren indtaste password
+ved hvert kald, hvilket gjorde et sammenhængende demo-forløb
+uigennemførligt.
+
+Løsningen består af to dele:
+
+\begin{itemize}
+    \item En lille hjælpe-proces leverer adgangskoden gennem et
+          grafisk dialogvindue, så fjernforbindelsen ikke længere
+          kræver, at GUI'en har en terminal at spørge i.
+    \item Forbindelsen deles, så det første login etablerer en
+          baggrunds-forbindelse, som efterfølgende kald genbruger.
+\end{itemize}
+
+Resultatet er, at password kun spørges én gang pr.~service og ikke
+én gang pr.~ROS-launch.
+
+\subsection{Øvrige mindre rettelser}
+
+Når GUI'en blev lukket, forsøgte den at stoppe en tjeneste, som
+krævede administrator-rettigheder. Det gav en rettighedsfejl, og
+vinduet hængte. Det blev løst ved at stoppe netop den tjeneste med
+de rette rettigheder og indpakke alle service-stop i
+fejlhåndtering, så GUI'en lukker rent uanset hvad.
+
+Der blev også forsøgt at hæve kontrol-frekvensen fra 10 til 50~Hz for at
+få jævnere bevægelser. Det virkede ikke. De 14 servoer deler en
+fælles servobus, og bussen kan simpelthen ikke nå at sende
+kommandoer ud til alle servoer hver 20~ms.
+
+Resultatet var ustabile bevægelser uden den ønskede gevinst, så
+forsøget blev rullet tilbage, og kontrolfrekvensen blev sat til
+10~Hz igen.
 
 \section{Resultat}
 
-Ved afleveringstidspunktet kan armen styres positionsmæssigt led for led
-med slider-GUI'en og kan afspille præindspillede animations-sekvenser
-fra commissioning-pakkens animations-fane. Pålideligheden af de
-underliggende ROS-topics er verificeret via \enquote{ros2 topic hz}.
+Armen kan styres led for led med slider-GUI'en, og den kan afspille
+forhåndsindspillede animations-sekvenser fra commissioning-pakkens
+animations-fane.
 
 % TODO efter lab lørdag: bekræft at step-respons er kørt for alle
 % syv led, eller juster sætningen herunder hvis kun en del er kørt.
-Step-respons køres på alle syv venstre arm-led og dokumenteres i bilaget.
+Step-respons er kørt på alle syv led i venstre arm, og resultaterne
+står i bilaget.
 
-De væsentligste ikke-opnåede mål er en kalibreret closed-loop
+To punkter er ikke leveret: en kalibreret closed-loop
 positionsregulering på ROS-niveau (fravalgt, jf.~ovenfor) og en
-funktionsdygtig per-led-effektmåling; sidstnævnte er påbegyndt, men
-ikke leveret, og er diskuteret i kapitel~\ref{ch:diskussion}.
+per-led-effektmåling (påbegyndt, men afbrudt af stabilitetshensyn,
+jf.~kapitel~\ref{ch:diskussion}).

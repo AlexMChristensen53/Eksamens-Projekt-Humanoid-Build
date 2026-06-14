@@ -1,0 +1,92 @@
+% Appendix B -- Kode-dokumentation
+
+\chapter{Kode-dokumentation}
+\label{AppendixB}
+
+Dette bilag samler den dokumentation, der knytter sig direkte til den
+software og de konfigurationer, som er udviklet eller ændret i
+forbindelse med projektet. Hovedteksten henviser til de relevante
+afsnit i dette bilag i stedet for at gengive kode og konfigurationer
+i fuld længde.
+
+% ---------------------------------------------------------------------
+\section{Manager-noden}
+\label{sec:appB-manager}
+
+% TODO: Beskrivelse af wattson_servo_manager_node:
+%  - hvilke ROS-topics den lytter på og publicerer
+%  - hvilke services den eksponerer
+%  - hvordan JSON-konfigurationen indlæses ved opstart
+%  - hvordan kommandoer videresendes til ESP32-kontrolleren
+% Indsæt evt. relevant kodeuddrag i \begin{verbatim} ... \end{verbatim}.
+
+\textit{Indhold tilføjes -- se README og kildekode i workspace.}
+
+% ---------------------------------------------------------------------
+\section{JSON-konfiguration: servo\_arm\_left\_params.json}
+\label{sec:appB-json}
+
+% TODO: Beskrivelse af JSON-strukturen:
+%  - hvilke nøgler hver servo-post har (servo_id, gear_ratio, gain_P,
+%    gain_I, gain_D, min/max, default, feedback_enabled)
+%  - hvilke værdier der er ændret i projektet og hvorfor
+%  - eksempel-snippet med én servo-post
+
+\textit{Indhold tilføjes.}
+
+% ---------------------------------------------------------------------
+\section{Driver: DriverWaveshare}
+\label{sec:appB-driver}
+
+% TODO: Kort beskrivelse af driver-klassen:
+%  - hvilken rolle den spiller mellem manager-noden og ESP32
+%  - hvilke metoder der er væsentlige (særligt instans-defaults
+%    for feedback_enabled, jf. kapitel~\ref{ch:idrift})
+
+\textit{Indhold tilføjes.}
+
+% ---------------------------------------------------------------------
+\section{ServoControl.compute\_command og feedback\_enabled-gating}
+\label{sec:appB-feedback}
+
+% TODO: Dokumentation af den tre-niveau-gating, der er beskrevet i
+% kapitel~\ref{ch:idrift}:
+%  1) feedback_enabled i JSON-konfigurationen
+%  2) instans-default i DriverWaveshare
+%  3) effekt i ServoControl.compute_command (cachet position vs. målt)
+
+\textit{Indhold tilføjes.}
+
+% ---------------------------------------------------------------------
+\section{step\_response\_node}
+\label{sec:appB-step}
+
+% TODO: Beskrivelse af step_response_node:
+%  - formål (logging af feedback-vinkel ved fast step)
+%  - hvilke topics den lytter på/publicerer
+%  - output-format (CSV) og parametre (step-amplitude, varighed)
+
+\textit{Indhold tilføjes.}
+
+% ---------------------------------------------------------------------
+\section{Launcher-GUI}
+\label{sec:appB-gui}
+
+% TODO: Dokumentation af launcher-GUI'en:
+%  - hvilke service-knapper og animationsfunktioner den indeholder
+%  - hvordan den startes (slider_control.launch.py el.l.)
+%  - skærmbillede kan suppleres i AppendixA-foto-afsnittet
+
+\textit{Indhold tilføjes.}
+
+% ---------------------------------------------------------------------
+\section{Stabil USB-portbinding -- konfigurationsændring}
+\label{sec:appB-portbinding}
+
+% TODO: Den faktiske konfigurationsfil eller kode-diff, der binder
+% manager-noden mod /dev/serial/by-path/ frem for /dev/ttyUSBx.
+% Dokumentationen er beskrevet i hovedteksten i
+% kapitel~\ref{ch:el}, afsnit~\ref{sec:usb-binding};
+% selve filændringen hører hjemme her.
+
+\textit{Indhold tilføjes.}

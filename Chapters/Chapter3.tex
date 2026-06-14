@@ -12,7 +12,7 @@ afgrænset delsystem.
 \section{Robotten som helhed}
 
 Wattson er en bipedal humanoid robot, hvor samtlige bærende mekaniske dele
-er fremstillet ved FDM-3D-print. Robotten består overordnet af følgende
+er fremstillet ved hjælp af 3D-Print specifikt PLA. Robotten består overordnet af følgende
 delsystemer:
 
 \begin{itemize}
@@ -23,7 +23,7 @@ delsystemer:
     \item Torso, hofte og to ben med flere led pr.\ ben
 \end{itemize}
 
-Robotten styres af en enkelt indlejret computer (Jetson Orin Nano), som
+Robotten styres af en enkelt computer (Jetson Orin Nano), som
 afvikler en eksisterende ROS~2 Humble-baseret softwarestack. Aktuatorerne
 er fordelt på flere dedikerede mikrocontrollere (ESP32), der hver styrer
 en logisk gruppe af servoer og kommunikerer med Jetsonen via USB-serial.
@@ -33,35 +33,81 @@ ZED-stereo\-kamera, men disse funktioner er ikke en del af rapportens scope
 
 % TODO: indsæt et samlet block-diagram her -- robotten med alle delsystemer
 % og deres forbindelser til Jetsonen via ESP32-controllere.
-% \begin{figure}[h]
-%     \centering
-%     \includegraphics[width=0.9\textwidth]{Figures/robot-overview.pdf}
-%     \caption{Overordnet arkitektur for Wattson-robotten.}
-%     \label{fig:robot-overview}
-% \end{figure}
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        scale=0.72, transform shape,
+        node distance=0.9cm and 0.2cm,
+        every node/.style={font=\small},
+        host/.style={draw, rectangle, rounded corners=2pt,
+            minimum height=0.8cm, minimum width=4.4cm,
+            align=center, fill=blue!8, thick},
+        block/.style={draw, rectangle, rounded corners=2pt,
+            minimum height=0.8cm, minimum width=3.6cm,
+            align=center, fill=gray!8},
+        sensor/.style={draw, rectangle, rounded corners=2pt,
+            minimum height=0.8cm, minimum width=3.2cm,
+            align=center, fill=green!8},
+        servos/.style={draw, rectangle, dashed,
+            minimum height=0.9cm, minimum width=3.6cm,
+            align=center, fill=gray!3},
+        line/.style={-{Latex[length=1.6mm]}, thick},
+    ]
+        \node[host] (jetson) {Jetson Orin Nano\\\footnotesize ROS\,2 Humble \textbar{} 4$\times$ USB};
 
-\section{Arm-delsystemet}
+        \node[sensor, above=0.7cm of jetson] (zed) {ZED-stereokamera};
+
+        \node[block, below left=1.0cm and 0.1cm of jetson] (esp1)
+            {ESP32 -- gul};
+        \node[block, below=1.0cm of jetson] (esp2)
+            {ESP32 -- rød};
+        \node[block, below right=1.0cm and 0.1cm of jetson] (esp3)
+            {ESP32 -- hvid};
+
+        \node[servos, below=of esp1] (s1)
+            {Venstre arm\\\footnotesize 7$\times$ ST3215};
+        \node[servos, below=of esp2] (s2)
+            {Højre arm + hoved\\\footnotesize 7$\times$ ST3215 + 2$\times$ servo};
+        \node[servos, below=of esp3] (s3)
+            {Hænder\\\footnotesize 10$\times$ SC09};
+
+        \draw[line] (zed) -- node[right, font=\scriptsize]{USB} (jetson);
+        \draw[line] (jetson.south) -- (esp1.north);
+        \draw[line] (jetson.south) -- (esp2.north);
+        \draw[line] (jetson.south) -- (esp3.north);
+        \draw[line] (esp1) -- (s1);
+        \draw[line] (esp2) -- (s2);
+        \draw[line] (esp3) -- (s3);
+    \end{tikzpicture}
+    \caption{Overordnet styringsarkitektur for Wattson-robotten.
+    Farverne svarer til den fysiske kabelmærkning,
+    jf.~kapitel~\ref{ch:el}.}
+    \label{fig:robot-overview}
+\end{figure}
+
+\section{Armen}
 \label{sec:arm-delsystem}
 
 En arm er den enhed, der i rapporten behandles som selvstændigt delsystem.
 Armen består af syv aktive led, der tilsammen udgør en antropomorf
-kinematik: skulder (pitch, roll, yaw), albue (pitch), underarm (yaw) og
-håndled (pitch, roll).
+kinematik: skulderen har tre frihedsgrader (pitch, roll og yaw), albuen
+én (pitch), underarmen én (yaw), og håndleddet to (pitch og roll).
 
 \subsection{Aktuatorer}
 
 De syv led i armen drives af Waveshare ST3215 seriebus-servoer.
 Dette er en intelligent servotype med indbygget mikrocontroller, magnetisk
-positionsencoder og en intern PID-løkke, der lukker positionsreguleringen
-om sin egen aksel. Servoerne kommunikerer over en halv-duplex TTL-seriel
-bus, hvor flere servoer er forbundet i daisy-chain og adresseres ved et
-unikt ID (i denne arm er ID~1--7 anvendt).
+positionsencoder og en intern PID-løkke. Servoerne kommunikerer over en
+halv-duplex TTL-seriel bus, herefter blot servobussen, hvor flere
+servoer er forbundet i daisy-chain og adresseres ved hvert sit
+unikke ID.
 
-Den interne PID-løkke gør, at den overordnede styring kun behøver sende en
-ønsket position til hver servo; den lokale regulator i servoen sørger
-selv for at nå den. Reguleringsparametrene (proportional-, integral- og
-differentialled) er konfigurerbare pr.\ servo og indlæses fra en JSON-fil
-ved opstart, jf.\ afsnit~\ref{sec:doks-kode}.
+Den interne PID-løkke gør, at den overordnede styring kun behøver sende
+en ønsket position til hver servo; reguleringen mod målpositionen sker
+lokalt i servoen. Reguleringsmekanismen er beskrevet i
+kapitel~\ref{ch:el}, og selve PID-parametrene indlæses fra en
+JSON-konfigurationsfil, der er dokumenteret i
+afsnit~\ref{sec:doks-kode}.
 
 % TODO: kort tabel over servoerne -- ID, led-navn, gear-ratio, software-grænser
 % Værdierne kan trækkes direkte fra servo_arm_left_params.json.
@@ -70,45 +116,96 @@ ved opstart, jf.\ afsnit~\ref{sec:doks-kode}.
 
 Servoerne er ikke forbundet direkte til Jetsonen, men til en dedikeret
 ESP32-mikrocontroller, der fungerer som bus-master på den serielle
-servobus. ESP32'en er via USB forbundet til Jetsonen og fremstår dér som
-en virtuel COM-port (\enquote{/dev/ttyUSBx}). I den fuldt opbyggede
-robot er der flere ESP32-controllere (én pr.\ logisk gruppe -- venstre arm
-+ hoved, højre arm, hænder), men i den afgrænsede konfiguration anvendes
-kun den, der styrer den valgte arm.
+servobus. ESP32'en er via USB forbundet til Jetsonen og videresender
+kommandoer fra Jetsonen ud til de enkelte servoer.
+
+I den fuldt opbyggede robot er der tre ESP32-controllere, én pr.\
+logisk gruppe. De er mærket med farverne gul, rød og hvid, der svarer
+til kabelfarverne (jf.\ kapitel~\ref{ch:el}). I den afgrænsede
+konfiguration anvendes kun den, der styrer den valgte arm.
 
 % TODO: kort beskrivelse af ESP32'ens firmware -- protokol mod Jetsonen.
 % Skal undersøges/afklares med Nicoline. Hvis tiden ikke rækker, kan det
 % beskrives på højt niveau: "ESP32'en oversætter beskeder fra ROS-noden
 % til ST3215-protokollen og videresender feedback den anden vej."
 
+\clearpage
 \subsection{Mekanisk opbygning}
 
-De mekaniske led består af 3D-printede strukturdele, der monteres direkte
-på servoernes udgangsaksler. Belastningen i leddet bæres altså af både
+De mekaniske led består af 3D-printede dele, der monteres direkte
+på servoernes aksler. Belastningen i leddet bæres altså af både
 selve den printede del og af servoens lejer. Denne konstruktion er let og
 billig, men introducerer nogle særlige hensyn omkring styrke, stivhed og
 slid, som behandles i kapitel~\ref{ch:diskussion}.
 
 \subsection{Signal- og effektkæde}
 
-På et overordnet niveau ser signal- og effektkæden for én arm således ud:
+På et overordnet niveau ser signal- og effektkæden for én arm ud som
+vist i Figur~\ref{fig:arm-blokdiagram}. Signal- og effektvejene er
+adskilte og mødes først ved den enkelte servo: positionskommandoer kommer
+fra Jetsonen via USB og servobussen, mens forsyningen kommer direkte fra
+strømforsyningen via en WAGO-klemrække. Den nominelle driftsspænding
+% TODO: bekræft eksakt spænding mod den anvendte PSU; kapitel~\ref{ch:el}
+% angiver 12\,V via Mean~Well~DDR-120.
+for ST3215 er ca.\ 12\,V; den eksakte forsynings\-værdi fremgår af
+kapitel~\ref{ch:el}.
 
-\begin{itemize}
-    \item \textbf{Signal:} Jetson Orin Nano $\rightarrow$ USB $\rightarrow$
-          ESP32 $\rightarrow$ TTL-serial bus $\rightarrow$ ST3215 ID~1--7.
-    \item \textbf{Effekt:} Strømforsyning $\rightarrow$ fordelingsskinne
-          $\rightarrow$ ST3215 ID~1--7 (nominel driftsspænding ca.\ 7,4\,V
-          % TODO: bekræft eksakt spænding mod den anvendte PSU
-          ).
-\end{itemize}
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.8cm and 0.9cm,
+        every node/.style={font=\small},
+        host/.style={draw, rectangle, rounded corners=2pt,
+            minimum height=0.9cm, minimum width=2.8cm,
+            align=center, fill=blue!8, thick},
+        block/.style={draw, rectangle, rounded corners=2pt,
+            minimum height=0.9cm, minimum width=2.4cm,
+            align=center, fill=gray!8},
+        psu/.style={draw, rectangle, rounded corners=2pt,
+            minimum height=0.9cm, minimum width=2.8cm,
+            align=center, fill=orange!12, thick},
+        servo/.style={draw, rectangle, rounded corners=2pt,
+            minimum height=1.1cm, minimum width=2.4cm,
+            align=center, fill=gray!3, thick},
+        sigline/.style={-{Latex[length=2mm]}, thick},
+        pwrline/.style={-{Latex[length=2mm]}, thick, double, double distance=1pt},
+    ]
+        % Signal chain (top row)
+        \node[host] (jetson) {Jetson Orin Nano};
+        \node[block, right=of jetson] (esp) {ESP32\\\footnotesize bus-master};
 
-% TODO: erstat ovenstående punktliste med et egentligt block-diagram.
-% \begin{figure}[h]
-%     \centering
-%     \includegraphics[width=0.9\textwidth]{Figures/arm-blokdiagram.pdf}
-%     \caption{Signal- og effektkæde for én arm.}
-%     \label{fig:arm-blokdiagram}
-% \end{figure}
+        % Power chain (bottom row)
+        \node[psu, below=1.6cm of jetson] (psu) {Strømforsyning};
+        \node[block, right=of psu] (rail) {WAGO-klemrække};
+
+        % Servo group (right)
+        \node[servo, right=1.4cm of esp,
+              anchor=west, yshift=-0.9cm,
+              minimum height=2.6cm] (servos)
+            {7$\times$ ST3215\\\footnotesize ID 1--7\\(daisy-chain)};
+
+        % Signal arrows
+        \draw[sigline] (jetson) -- node[above, font=\scriptsize]{USB} (esp);
+        \draw[sigline] (esp.east) -- node[above, font=\scriptsize]{servobus}
+            (servos.west |- esp.east);
+
+        % Power arrows
+        \draw[pwrline] (psu) -- (rail);
+        \draw[pwrline] (rail.east) -- node[above, font=\scriptsize]{$\sim$12\,V}
+            (servos.west |- rail.east);
+
+        % Legend
+        \node[anchor=north west, font=\scriptsize, align=left]
+            at ([yshift=-0.4cm]psu.south west)
+            {\tikz\draw[sigline] (0,0) -- (0.6,0); \ signal \quad
+             \tikz\draw[pwrline] (0,0) -- (0.6,0); \ effekt};
+    \end{tikzpicture}
+    \caption{Signal- og effektkæde for én arm. Signal- og effektveje er
+    adskilte og mødes først ved servoerne. Spændingsangivelsen er
+    nominel; den faktiske forsynings\-værdi for den valgte PSU fremgår
+    af kapitel~\ref{ch:el}.}
+    \label{fig:arm-blokdiagram}
+\end{figure}
 \clearpage
 \section{Eksisterende dokumentation og kildekode}
 \label{sec:doks-kode}
@@ -124,8 +221,9 @@ formål er især følgende relevant:
           servokonfigurationer fra en angiven mappe og opretter
           ROS-topics for hver gruppe.
     \item \enquote{slider\_control.launch.py} -- en GUI med skyderkontroller
-          pr.\ led. Velegnet til idriftsættelse, fordi den ikke kræver
-          VR-udstyr, kamera eller invers kinematik.
+          pr.\ led. Den gør det enkelt at sende styresignaler direkte
+          til den enkelte servo og dermed verificere, at hvert led
+          reagerer som forventet.
     \item \enquote{servo\_arm\_left\_params.json} -- konfigurationsfil for
           den venstre arms syv servoer. Indeholder for hvert led bl.a.\
           servo-ID, gear-ratio, PID-gains (\enquote{gain\_P},
@@ -136,6 +234,9 @@ formål er især følgende relevant:
 Det er væsentligt, at konfigurationsfilen for en arm er selvstændig.
 Hver arm kan derfor i princippet køres uafhængigt af resten af robotten,
 hvilket er en forudsætning for det modulære arbejde i denne rapport.
+Den enkelte fils opbygning og de ændringer, der er foretaget under
+projektet, er dokumenteret i Bilag~\ref{AppendixB},
+afsnit~\ref{sec:appB-json}.
 
 \section{Begrundelse for valg af arm som delsystem}
 
@@ -144,21 +245,16 @@ indeholder alle de elementer, der karakteriserer Wattson-projektet som
 helhed:
 
 \begin{itemize}
-    \item En 3D-printet mekanisk struktur med flere bevægelige led
-          og dynamisk belastning.
+    \item Et 3D-printet skelet med flere bevægelige led
     \item Flere elektriske aktuatorer, der skal forsynes og styres
           samtidigt.
     \item En dedikeret mikrocontroller (ESP32), der skal idriftsættes
           og kommunikere med en overordnet computer.
     \item En reguleringsmæssig styring -- både den lokale PID-løkke i
           hver servo og den overordnede positionskommando fra ROS.
-    \item En kommunikationskæde i flere niveauer (USB, TTL-serial,
+    \item En kommunikationskæde i flere niveauer (USB, servobus,
           servo-protokol).
 \end{itemize}
 
-\noindent Armen er samtidig stor nok til at give et meningsfuldt
-demonstrationsresultat, men lille nok til at kunne fuldføres og
-dokumenteres inden for projektets tidsramme. Dette delsystem danner
-udgangspunkt for de følgende kapitler om mekanisk fremstilling
-(kapitel~\ref{ch:mekanik}), elektrisk integration (kapitel~\ref{ch:el})
-og idriftsættelse (kapitel~\ref{ch:idrift}).
+\noindent Armen rummer dermed både den mekaniske, elektriske og
+styringsmæssige side af projektet i én samlet enhed.

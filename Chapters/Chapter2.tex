@@ -8,42 +8,40 @@
 \section{Anvendelseskontekst}
 \label{sec:anvendelseskontekst}
 
-Wattson er oprindeligt udviklet med henblik på vedligeholds- og
-inspektionsopgaver i højspændingsanlæg. Denne rapport behandler ikke en
-konkret højspændingsanvendelse, men anvendelseskonteksten er relevant, fordi
-den begrunder en række af de design- og komponentvalg, integrationen i de
-følgende kapitler er underlagt. Konteksten leverer dermed den ramme, hvori
-dimensionering, wiring og softwareafgrænsning skal forstås.
+Wattson er oprindeligt udviklet til vedligeholds- og
+inspektionsopgaver i højspændingsanlæg. Rapporten behandler ikke en
+konkret højspændingsanvendelse, men konteksten er taget med, fordi
+den begrunder flere af de design- og komponentvalg, integrationen
+arbejder ud fra.
 
-Højspændingsanlæg er bygget til mennesker. Betjeningspaneler, ventiler,
-afbrydere og gangbroer er placeret i menneskehøjde og dimensioneret til
-menneskelig rækkevidde. En klassisk industrirobot på et fast fundament kan
-derfor kun dække en lille del af et anlæg uden, at miljøet bygges om. En
-menneskeformet robot kan derimod i princippet færdes og betjene den
-eksisterende infrastruktur uden tilpasning. Det forklarer valget af en
-to-armet, opretstående konstruktion med en rækkevidde tæt på en voksen
-persons og en antropomorf arm med 7~DOF, hvor håndens position og
-orientering kan nås på flere måder.
+Højspændingsanlæg er bygget til mennesker. Betjeningspaneler,
+ventiler, afbrydere og gangbroer sidder i menneskehøjde og er
+dimensioneret til menneskelig rækkevidde.
 
-Konteksten forklarer også flere af de arkitekturvalg, integrationen er
-underlagt:
+En klassisk industrirobot på et fast fundament dækker derfor kun en
+lille del af et anlæg, hvis ikke miljøet bygges om. En
+menneskeformet robot kan i princippet færdes i den eksisterende
+infrastruktur uden tilpasning. Det forklarer valget af en to-armet,
+opretstående konstruktion med en rækkevidde tæt på en voksen
+persons og en antropomorf arm med 7~DOF.
+
+Anvendelseskonteksten forklarer også flere af de arkitekturvalg,
+integrationen arbejder ud fra:
+
 \begin{itemize}
-    \item Hver arm har sin egen serielle servo-bus med dedikeret
-          mikrocontroller, så delsystemer kan idriftsættes og fejlfindes hver
-          for sig -- en forudsætning for, at én arm kan bygges og afprøves
-          uafhængigt af resten af robotten.
-    \item Den eksisterende softwarestak understøtter teleoperation via
-          VR-udstyr; det forudsætter pålidelig, lav-latens kommunikation
-          mellem operatør, Jetson og servo-bus, hvilket stiller krav til
-          buslayout og kabelføring, der gælder uanset styringsmodus.
-    \item Mekaniske og elektriske grænseflader er designet til at kunne
-          demonteres uden specialværktøj, så printede slidkomponenter kan
-          udskiftes i drift.
+    \item Hver arm har sin egen serielle servobus med en dedikeret
+          ESP32-mikrocontroller som bus-master. Delsystemerne kan
+          derfor idriftsættes og fejlfindes hver for sig, og én arm
+          kan bygges og afprøves uafhængigt af resten af robotten.
+    \item Den eksisterende softwarestak understøtter teleoperation
+          via VR-udstyr. Det kræver pålidelig og lav-latens
+          kommunikation mellem operatør, Jetson og servobus, og det
+          stiller krav til buslayout og kabelføring, som gælder
+          uanset om armen styres via VR eller via en GUI.
+    \item Mekaniske og elektriske grænseflader er designet, så de
+          kan demonteres uden specialværktøj, og printede
+          slidkomponenter kan udskiftes i drift.
 \end{itemize}
-
-Disse rammebetingelser er fastlagt før integrationsarbejdet, men de er
-afgørende for at forstå, hvorfor armen ser ud, som den gør, og hvorfor de
-komponenter, der er bestilt og monteret, er valgt, som de er.
 
 % Princip: dette kapitel introducerer KUN den baggrund, som rapportens
 % senere kapitler faktisk bygger videre på. Det er ikke et generelt

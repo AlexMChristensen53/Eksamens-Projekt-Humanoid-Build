@@ -3,39 +3,56 @@
 \label{ch:mekanik}
 
 Robottens mekaniske dele er fuldt 3D-printede efter Energinets
-eksisterende konstruktion. Projektet har ikke ændret på det mekaniske
-design; arbejdet i dette kapitel omfatter fremstilling af en
-arbejdsklar replica af venstre arm og de tilretninger, der opstod
-undervejs, når printede dele skulle samles til en fungerende arm.
+eksisterende konstruktion. Projektet har ikke ændret på det
+mekaniske design; arbejdet i dette kapitel omfatter fremstilling af
+en arbejdsklar replica af venstre arm og de tilretninger, der
+opstod undervejs, når printede dele skulle samles til en fungerende
+arm.
 
 \section{Print-strategi for armens dele}
 
-% TODO ALEX: Faktiske print-parametre.
-% Spørgsmål:
-%   1. Hvilket materiale er delene printet i? (PLA, PETG, ABS, andet?)
-%   2. Hvilken printer er brugt?
-%   3. Har du brugt de print-parametre, der ligger i Energinets/TI's
-%      filer som default, eller har du ændret noget (infill, perimetre,
-%      lag-højde, support, orientering)?
-%   4. Hvis du har ændret noget: hvad og hvorfor?
-% Skriv svar her, så omskriver jeg afsnittet.
+Alle dele er printet i PLA på en Bambulab P1S. Print-parametrene
+fra de oprindelige slicer-filer er brugt uændret.
 
 \section{Samling og pasninger}
 
-% TODO ALEX: udfyld med faktiske pasnings-problemer fra samlingen.
-% Format pr. case: hvad gik ikke op, hvad blev gjort ved det.
-% Slet denne sektion hvis ingen pasninger har givet problemer.
+Første runde af print blev kørt med 0,2~mm laghøjde. Stort set
+ingen af pasningerne mellem to printede dele passede så sammen.
 
-\section{Status og resultat}
+De oprindelige dele er tegnet til 0,3~mm laghøjde. Da printene blev
+kørt om med den laghøjde, passede pasningerne uden manuel
+efterbearbejdning.
 
-% TODO ALEX: Faktisk status på din replica ved afleveringstidspunkt.
-% Spørgsmål:
-%   1. Hvor langt er du med din egen replica pr. afleveringsdato
-%      (15. juni)? Printet færdig? Samlet færdig? Wired færdig?
-%   2. Hvilke dele mangler at blive samlet/wired?
-%   3. Forventet færdig-dato (du har sagt: lige før eksamen 24. juni).
-% Bemærk: alle tests i rapporten er kørt på TI's oprindelige Wattson,
-% ikke på din replica. Det skal fremgå her uden at være et stort
-% point ud af det.
+Tolerancerne på en 3D-printet konstruktion ligger ikke kun i
+CAD-modellen, men også i de print-parametre, modellen er tegnet
+til. Følger de parametre ikke med filerne, er en ellers færdig
+konstruktion ikke nødvendigvis kompatibel med en standard-printers
+default-opsætning.
 
+\section{Belastet del der knækkede}
+
+Center-tandhjulet i sol-gearet på en af leddene knækkede under
+første idriftsættelse (figur~\ref{fig:sol-gear-knaek}). De
+oprindelige slicer-parametre satte infill og væg-tykkelse lavt nok
+til, at konstruktionen ikke kunne optage drejemomentet fra servoen.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.45\textwidth]{IMG20260505172547.jpg}
+  \caption{Knækket center-tandhjul fra sol-gearet.}
+  \label{fig:sol-gear-knaek}
+\end{figure}
+
+\section{Erstatning af dele}
+
+Hele armen består af printede dele (figur~\ref{fig:arm-dele}). En
+del, der knækker eller skal ændres, kan slices med rettede
+parametre, printes og monteres samme dag uden ekstern leverandør.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{IMG20260505172559.jpg}
+  \caption{Printede dele til venstre arm.}
+  \label{fig:arm-dele}
+\end{figure}
 

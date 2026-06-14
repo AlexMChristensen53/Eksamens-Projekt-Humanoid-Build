@@ -2,19 +2,16 @@
 \chapter{Elektrisk integration og wiring}
 \label{ch:el}
 
-Dette kapitel beskriver den elektriske opbygning af det arm-delsystem,
-projektet omfatter: hvilke komponenter der indgår, hvordan de er
-forbundet, og hvilke integrationsproblemer der opstod undervejs.
+Dette kapitel beskriver den elektriske opbygning af armen: hvilke
+komponenter der indgår, hvordan de er forbundet, og hvilke
+integrationsproblemer der opstod undervejs.
 
 \section{Komponentoversigt}
 
 Det elektriske delsystem omfatter komponenter på tre niveauer:
 aktuatorer i armen, en kommunikations-mikrocontroller mellem arm og
 host, og en host, der kører ROS\,2-laget. Den fulde komponentliste
-fremgår af Tabel~\ref{tab:komponenter-venstre-arm}. Farvemærkningen
-i tabellen følger den fysiske kabel-isolering på de tre ESP32-bokse,
-så hver USB-port på hubben permanent svarer til den samme logiske
-funktion.
+fremgår af Tabel~\ref{tab:komponenter-venstre-arm}.
 
 \begin{table}[H]
 \centering
@@ -34,8 +31,7 @@ Mean Well DDR-120             & 1 & DC-DC-omformer, 12\,V til ST3215. \\
 Chinfa DRD15 13.5W            & 1 & DC-DC-omformer, 5\,V til SC09. \\
 RS Pro 264V 120W              & 1 & Hovedforsyning, 120\,W. \\
 Siemens Sentron 8A            & 2 & Sikringer på 12\,V- og 5\,V-skinnen. \\
-USB-hub med 3 porte           & 1 & Rød, gul, hvid. \\
-Jetson Orin Nano              & 1 & ROS\,2-host. \\
+Jetson Orin Nano              & 1 & ROS\,2-host, 4$\times$ USB-port. \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -47,45 +43,58 @@ Signalvejen i den oprindelige konstruktion er kort og lineær:
 \begin{enumerate}
     \item Jetson Orin Nano sender positionskommandoer på et ROS-topic.
     \item Manager-noden serialiserer kommandoerne og skriver dem på en
-          virtuel COM-port mod ESP32-boksen.
-    \item ESP32-boksen konverterer beskeden til servobus-protokollen og
-          videresender den på den halv-duplexerede TTL-bus.
+          virtuel COM-port mod ESP32-kontrolleren.
+    \item ESP32-kontrolleren konverterer beskeden til servobus-protokollen og
+          videresender den på servobussen.
     \item Hver ST3215-servo på bussen filtrerer på sit servo-ID og
-          udfører den modtagne positionskommando i sin egen interne
-          PID-sløjfe.
+          modtager positionskommandoen som setpunkt. Servoens interne
+          PID-regulator driver herefter motoren mod den ønskede position
+          ud fra den indbyggede positionsencoder.
 \end{enumerate}
 
-Effektvejen er adskilt fra signalvejen: servobussen forsynes direkte fra
-sin egen forsyning, mens ESP32 og logik-niveau strømmes via USB fra
-Jetson'en.
+\subsection{Hvordan ved robotten egentlig hvor den skal bevæge sig hen?}
 
-\section{Stabil portbinding for ESP32-bokse}
+Det er værd at holde de to roller adskilt: ROS-laget bestemmer hvor
+armen skal hen, mens hvordan motoren kommer derhen håndteres lokalt i
+hver servo.
+
+Selve reguleringen sker i servoens indbyggede PID-løkke. Den modtagne
+positionskommando lægges ind som setpunkt, og PID-regulatoren
+sammenligner løbende setpunktet med den målte position fra servoens
+indbyggede encoder. Forskellen mellem de to udgør reguleringsfejlen,
+som P-, I- og D-leddene tilsammen omsætter til en motorstyrings\-værdi:
+P-leddet reagerer på den aktuelle afvigelse, I-leddet fjerner blivende
+fejl ved konstant belastning, og D-leddet dæmper hurtige svingninger.
+
+ESP32'en indgår kun som protokol-bro mellem USB og servobussen og er
+ikke en del af regulerings-løkken. Den overordnede styring behøver
+derfor ikke kende motorens dynamik eller belastningen i leddet.
+
+\section{Fast port for ESP32-kontrollere}
 \label{sec:usb-binding}
 
-Den væsentligste elektriske/integrationsmæssige rettelse i projektet
-vedrører tildelingen af USB-porte til de tre ESP32-bokse. Tidligere
-blev de adresseret som \enquote{/dev/ttyUSB0}, \enquote{/dev/ttyUSB1}
-og \enquote{/dev/ttyUSB2}, og rækkefølgen afhang af, hvilken boks
-operativsystemet enumererede først ved boot. I praksis betød det, at
-manager-noden kunne starte med at sende den venstre arms kommandoer
-til den højre arms ESP32, hvis kablerne var sat i en anden rækkefølge. 
-Systemet kører, det kører bare mod den forkerte hardware.
+Den væsentligste elektriske rettelse i projektet vedrører tildelingen
+af USB-porte til de tre ESP32-kontrollere.
 
-Løsningen er at adressere boksene via deres faste sti i
-\enquote{/dev/serial/by-path/} frem for en bestemt tilslutningsrækkefølge
-\enquote{/dev/ttyUSBx}. Hver fysisk USB-port på Jetson-hubben har en
-unik sti, der ikke ændrer sig mellem boots eller hvis maskinen
-genstartes. Manager-nodens konfiguration blev opdateret til at slå op
-i denne sti, og der blev oprettet dokumentation for hvor hver ESP32 sluttes til.
+Tidligere blev kontrollerne adresseret som \enquote{/dev/ttyUSB0},
+\enquote{/dev/ttyUSB1} og \enquote{/dev/ttyUSB2}. Rækkefølgen afhang
+af, hvilken kontroller operativsystemet enumererede først ved boot.
+Resultatet var, at manager-noden kunne ende med at sende den venstre
+arms kommandoer til den højre arms ESP32, hvis kablerne var sat i
+en anden rækkefølge end sidst. Systemet kører, det kører bare mod
+den forkerte hardware.
 
-\begin{itemize}
-    \item Port 2.2 -- RØDT kabel -- venstre arm
-    \item Port 2.3 -- GULT kabel -- højre arm og hoved
-    \item Port 2.1 -- HVIDT kabel -- hænder
-\end{itemize}
+Løsningen er at adressere kontrollerne via deres faste sti i
+\enquote{/dev/serial/by-path/} i stedet for \enquote{/dev/ttyUSBx}.
+Hver fysisk USB-port på Jetson'en har en unik sti, der ikke ændrer
+sig mellem boots eller efter en genstart. Manager-nodens konfiguration
+blev opdateret til at slå op i denne sti, og der blev oprettet
+dokumentation for, hvilken kontroller der hører til hvilken port.
 
-Mappingen afhænger nu af, hvilken fysisk USB-port boksen sidder i,
-ikke af om operatøren husker rækkefølgen ved tilslutning.
+Selve konfigurationsændringen er gengivet i Bilag~\ref{AppendixB},
+afsnit~\ref{sec:appB-portbinding}. Proceduren for at finde og
+verificere stierne, herunder den faktiske port-til-kabel-mapping,
+findes i Bilag~\ref{AppendixC}, afsnit~\ref{sec:appC-portbinding}.
 
 \section{Praktiske valg under integrationen}
 

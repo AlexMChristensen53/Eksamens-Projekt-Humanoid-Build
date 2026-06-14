@@ -5,28 +5,9 @@
 % Mål: ca. 0.5--1 side.
 % Hvad er næste skridt -- ud over rapportens scope.
 
-Rapporten har behandlet integrationen af én arm. Dette kapitel skitserer de
-naturlige næste skridt for projektet og placerer arbejdet i forhold til den
-bredere anvendelse af humanoide robotter i automationssammenhæng.
-
-\section{Det videre arbejde på Wattson}
-
-Det mest umiddelbare næste skridt er at udvide integrationen til de øvrige
-delsystemer i robotten:
-\begin{itemize}
-    \item Den modsatte arm, torso, hofteparti og hoved, hvor den modulære
-          arkitektur fra arm-systemet kan genbruges direkte.
-    \item Idriftsættelse af den fulde teleoperation via VR-udstyr og
-          ZED-kamera, som den eksisterende softwarestak allerede understøtter,
-          men som ligger uden for det her projekts afgrænsning.
-    \item Koordineret to-arms-bevægelse, der introducerer afhængigheder på
-          tværs af busser og dermed nye krav til synkronisering og
-          sikkerhedslogik.
-\end{itemize}
-
-Disse skridt udvider robotten i bredden, men ikke væsentligt i kompleksitet
-pr.\ delsystem; de metoder, der er anvendt i denne rapport, bør være direkte
-anvendelige.
+Rapporten har behandlet integrationen af én arm. Næste skridt --
+og placeringen af arbejdet i en bredere automations-sammenhæng --
+er skitseret nedenfor.
 
 \section{Fra prototype mod anvendelse}
 
@@ -51,6 +32,7 @@ Hvis robotten på sigt skal forlade laboratoriet og anvendes i et reelt miljø,
           tilsyn.
 \end{itemize}
 
+\clearpage
 \section{Humanoide robotter som supplement til klassisk automation}
 
 Wattson er en del af en bredere tendens, hvor humanoide robotter undersøges
@@ -74,5 +56,3 @@ afsnit~\ref{sec:anvendelseskontekst}), falder netop i den kategori.
 Om humanoide robotter får en udbredt rolle i industrien afhænger derfor
 mindre af, om de kan slå industrirobotter på deres hjemmebane, og mere af,
 om de kan løse de opgaver, som industrirobotter i dag ikke håndterer.
-Erfaringerne fra dette projekt -- både hvad der virker, og hvor mekanikken
-og elektronikken kommer til kort -- er et lille bidrag til den vurdering.

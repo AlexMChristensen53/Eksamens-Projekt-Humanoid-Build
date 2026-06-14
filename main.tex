@@ -50,6 +50,28 @@ headsepline, % Uncomment to get a line under the header
 \usepackage[autostyle=false,style=english]{csquotes} % \enquote{} bruger engelske "to-oppe"-anførselstegn
 
 \usepackage{float} % giver [H]-placering for tabeller og figurer
+\usepackage{wrapfig} % giver tekst flydende rundt om figurer
+
+\graphicspath{{Figures/}{Pictures/}{./}}
+
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,fit,calc}
+
+%----------------------------------------------------------------------------------------
+%	OVERSKRIFTSAFSTAND
+%----------------------------------------------------------------------------------------
+
+\usepackage{titlesec}
+
+% Kapiteloverskrift: omdefiner klassens egne skips (titlesec rammer ikke \chapter her)
+\RenewDocumentCommand{\abovechapterskip}{}{\vspace*{0pt}}
+\RenewDocumentCommand{\chapterinbetweenskip}{}{\vspace*{6pt}}
+\RenewDocumentCommand{\chapterbelowskip}{}{\vspace*{14pt}}
+
+% Sektion / underafsnit: stram afstand op
+\titlespacing*{\section}{0pt}{3.4ex plus .8ex minus .2ex}{1.6ex plus .3ex}
+\titlespacing*{\subsection}{0pt}{2.8ex plus .6ex minus .2ex}{1.2ex plus .3ex}
+\titlespacing*{\subsubsection}{0pt}{2.2ex plus .5ex minus .2ex}{0.8ex plus .2ex}
 
 %----------------------------------------------------------------------------------------
 %	SIDEBRUDS-STYRING
@@ -203,8 +225,8 @@ headsepline, % Uncomment to get a line under the header
 % Uncomment the lines as you write the Appendices
 
 \include{Appendices/AppendixA}
-%\include{Appendices/AppendixB}
-%\include{Appendices/AppendixC}
+\include{Appendices/AppendixB}
+\include{Appendices/AppendixC}
 
 %----------------------------------------------------------------------------------------
 %	BIBLIOGRAPHY
