@@ -1,0 +1,85 @@
+% Appendix D -- Procedurer
+
+\chapter{Procedurer}
+\label{AppendixD}
+
+Dette bilag samler de praktiske procedurer, der bruges til at
+opstarte og fejlsøge robotten i den konfiguration, som rapporten
+omfatter. Procedurerne er en opdatering af det eksisterende
+materiale i workspace-repositoriet.
+
+% ---------------------------------------------------------------------
+\section{Opstartsprocedure}
+\label{sec:appC-opstart}
+
+Den følgende procedure tager udgangspunkt i den afgrænsede
+konfiguration, hvor kun venstre arm er aktiv. Trinene udføres på
+Jetson Orin Nano-hosten.
+
+\begin{enumerate}
+    \item \textbf{Forberedelse.} Tjek, at de tre ESP32-kontrollere
+        sidder i de korrekte USB-porte (rød i port~2.2, gul i
+        port~2.3, hvid i port~2.1, jf.~afsnit~\ref{sec:appC-portbinding}),
+        og at strømforsyningen til armen er tilsluttet og tændt.
+    \item \textbf{Start manager-noden.} Kør
+        \enquote{ros2 launch wattson\_servos servos.launch.py}.
+        Manager-noden indlæser
+        \enquote{servo\_arm\_left\_params.json}, åbner forbindelsen
+        til ESP32'en for venstre arm via dens \enquote{by-path}-sti,
+        og opretter ROS-topics og services for de syv led.
+    \item \textbf{Start slider-GUI'en.} Kør
+        \enquote{ros2 launch wattson\_servos slider\_control.launch.py}.
+        GUI'en åbner med en skyder pr.~led, så hvert led kan
+        bevæges uafhængigt.
+    \item \textbf{Verifikation.} Bevæg én skyder ad gangen, og
+        bekræft visuelt, at det rigtige led reagerer i den rigtige
+        retning og inden for sine software-grænser
+        (jf.~Tabel~\ref{tab:kalibrering-tab} i
+        Bilag~\ref{AppendixB}).
+\end{enumerate}
+
+Forsyningen skal være slukket, inden kabler eller stik flyttes,
+og inden manager-noden genstartes mod en ny konfiguration.
+
+% ---------------------------------------------------------------------
+\clearpage
+\section{Portbinding -- procedure}
+\label{sec:appC-portbinding}
+
+Dette afsnit beskriver, hvordan den faste sti i
+\enquote{/dev/serial/by-path/} for hver ESP32-kontroller findes,
+og hvordan de tre stier hænger sammen med kabelfarverne på den
+fysiske montage.
+
+\paragraph{Find stien for en kontroller.}
+\begin{enumerate}
+    \item Tilslut én ESP32 ad gangen og kør
+        \enquote{ls -l /dev/serial/by-path/}. Stien til den
+        netop tilsluttede kontroller dukker op som et symlink, der
+        peger ind på den tilhørende \enquote{/dev/ttyUSBx}.
+    \item Noter sti og fysisk port (rød/gul/hvid) for hver
+        kontroller.
+    \item Indsæt stierne i manager-nodens konfiguration som
+        beskrevet i Bilag~\ref{AppendixC},
+        afsnit~\ref{sec:appB-portbinding}.
+\end{enumerate}
+
+\paragraph{Mapping mellem port, kabelfarve og delsystem.}
+Den verificerede mapping for den nuværende fysiske montage er
+gengivet i Tabel~\ref{tab:portmapping}.
+
+\begin{table}[H]
+\centering
+\caption{Port-til-kabel-mapping for de tre ESP32-kontrollere
+på Jetson Orin Nano.}
+\label{tab:portmapping}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Kabelfarve} & \textbf{USB-port} & \textbf{Delsystem} \\
+\midrule
+Rød  & 2.2 & Venstre arm \\
+Gul  & 2.3 & Højre arm + hoved \\
+Hvid & 2.1 & Begge hænder \\
+\bottomrule
+\end{tabular}
+\end{table}

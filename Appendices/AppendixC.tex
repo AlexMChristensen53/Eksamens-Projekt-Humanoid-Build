@@ -1,75 +1,144 @@
-% Appendix C -- Procedurer
+% Appendix C -- Kode-dokumentation
 
-\chapter{Procedurer}
+\chapter{Kode-dokumentation}
 \label{AppendixC}
 
-Dette bilag samler de praktiske procedurer, der bruges til at
-idriftsætte, opstarte og fejlsøge robotten i den konfiguration, som
-rapporten omfatter. Procedurerne er en opdatering af det eksisterende
-materiale, som indgår i workspace-repositoriet.
+Dette bilag samler den dokumentation, der knytter sig direkte til den
+software og de konfigurationer, som er udviklet eller ændret i
+forbindelse med projektet. Hovedteksten henviser til de relevante
+afsnit i dette bilag i stedet for at gengive kode og konfigurationer
+i fuld længde.
 
 % ---------------------------------------------------------------------
-\section{Opstartsprocedure (opdateret)}
-\label{sec:appC-opstart}
+\section{JSON-konfiguration: servo\_arm\_left\_params.json}
+\label{sec:appB-json}
 
-% TODO: Den opdaterede opstartsprocedure for robotten:
-%  - kabel-tjekliste (forsyning, USB-bokse på korrekt port)
-%  - launch-rækkefølge (servos.launch.py før slider_control osv.)
-%  - validering: hvordan man bekræfter at hver arm reagerer korrekt
-%  - sikkerhedshensyn (forsyning slukket før kabelændringer)
+Konfigurationsfilen indeholder én post pr.~led i armen. Hver post
+beskriver, hvilken fysisk servo leddet er bundet til, hvordan
+servovinklen omsættes til led-vinkel, og hvilke grænser
+manager-noden skal håndhæve. Et eksempel for skulderens
+pitch-led er vist nedenfor.
 
-\textit{Indhold tilføjes -- baseres på den eksisterende opstartsprocedure
-i workspace-repositoriet, opdateret med ændringerne fra
-kapitel~\ref{ch:el} og kapitel~\ref{ch:idrift}.}
+\begin{verbatim}
+"joint_left_shoulder_pitch": {
+    "servo_id": 7,
+    "dir": 1,
+    "gear_ratio": 3,
+    "angle_software_min": 120,
+    "angle_software_max": 240,
+    "angle_speed_max": 100,
+    "default_position": 150,
+    "feedback_enabled": false,
+    "gain_P": 1.0,
+    "gain_I": 0.0,
+    "gain_D": 0.0
+}
+\end{verbatim}
+
+De enkelte felter har følgende betydning:
+
+\begin{description}
+    \item[\enquote{servo\_id}] Servoens adresse på den serielle
+        servobus. Manager-noden bruger ID'et til at sende
+        kommandoen til den rigtige servo.
+    \item[\enquote{dir}] Retningstegn ($+1$ eller $-1$). Angiver,
+        om servoens aksel og selve leddet drejer samme vej eller
+        modsat. Bruges til at vende fortegn på vinklen, når den
+        sendes til servoen.
+    \item[\enquote{gear\_ratio}] Antallet af servo-omdrejninger
+        pr.~led-omdrejning. Manager-noden ganger målvinklen med
+        denne værdi, så den overordnede styring kan arbejde i
+        led-vinkler frem for servo-vinkler.
+    \item[\enquote{angle\_software\_min},
+          \enquote{angle\_software\_max}] Software-grænserne for
+        leddet i grader. Kommandoer uden for intervallet klippes
+        af manager-noden, så hverken servo eller mekanik
+        belastes ud over arbejdsrummet.
+    \item[\enquote{angle\_speed\_max}] Den højeste tilladte
+        vinkelhastighed for leddet (grader/s).
+    \item[\enquote{default\_position}] Den vinkel, leddet sættes
+        til ved opstart.
+    \item[\enquote{feedback\_enabled}] Bestemmer, om manager-noden
+        skal bruge en målt vinkel fra servoens encoder eller den
+        senest kommanderede vinkel. Står på \enquote{false} for
+        alle syv ST3215-servoer i den endelige konfiguration; se
+        afsnit~\ref{sec:appB-feedback}.
+    \item[\enquote{gain\_P}, \enquote{gain\_I}, \enquote{gain\_D}]
+        Indstillinger for servoens interne regulator. Værdierne
+        er overtaget uændret fra Energinet og er ikke tunet i
+        dette projekt.
+\end{description}
 
 % ---------------------------------------------------------------------
-\section{Portbinding -- procedure}
-\label{sec:appC-portbinding}
+\section{ServoControl.compute\_command og feedback\_enabled-gating}
+\label{sec:appB-feedback}
 
-% TODO: Trin-for-trin procedure for at finde og verificere
-% /dev/serial/by-path/-stier til hver ESP32-kontroller:
-%  - kommandoer (udls -l /dev/serial/by-path/, dmesg | grep tty osv.)
-%  - hvordan man identificerer hvilken sti der svarer til hvilken farve
-%  - hvordan manager-nodens konfiguration opdateres med de nye stier
-% Selve konfigurationsfilen ligger i Bilag~\ref{AppendixB},
-% afsnit~\ref{sec:appB-portbinding}.
-%
-% TODO ALEX: bekræft port-til-kabel-mapping mod den fysiske montage.
-% Foreløbig mapping (skal verificeres):
-%   Port 2.2 -- GULT kabel  -- venstre arm
-%   Port 2.3 -- RØDT kabel  -- højre arm og hoved
-%   Port 2.1 -- HVIDT kabel -- hænder
+Flaget \enquote{feedback\_enabled} kan styres tre steder i
+koden, og resultatet er, at en målt vinkel fra servoens encoder
+kun bliver brugt, hvis alle tre lag er enige om det. I den
+endelige konfiguration står flaget på \enquote{false}, og
+manager-noden videresender derfor den senest kommanderede vinkel
+på \enquote{/joint\_states\_feedback} -- ikke en målt værdi.
 
-\textit{Indhold tilføjes.}
+\begin{enumerate}
+    \item \textbf{JSON-konfigurationen.} For hver servo-post i
+        \enquote{servo\_arm\_left\_params.json} står
+        \enquote{feedback\_enabled} eksplicit. Alle syv ST3215-poster
+        for venstre arm er sat til \enquote{false}.
+    \item \textbf{Instans-default i driveren.} Klassen
+        \enquote{DriverWaveshare} har \enquote{feedback\_enabled}
+        som instans-default sat til \enquote{False}, så driveren
+        som udgangspunkt heller ikke spørger servoen om dens
+        målte position.
+    \item \textbf{ServoControl.compute\_command.} I selve metoden,
+        der bestemmer hvad der publiceres på
+        \enquote{/joint\_states\_feedback}, sættes feltet
+        \enquote{self.angle} lig den senest kommanderede vinkel,
+        når flaget er \enquote{false}, og lig en målt værdi, når
+        flaget er \enquote{true}.
+\end{enumerate}
 
-% ---------------------------------------------------------------------
-\section{Kalibrerings- og idriftsættelsesprocedure}
-\label{sec:appC-kalibrering}
-
-% TODO: Procedure for at sætte hver servo i defaultposition og
-% kontrollere software-grænser (jf.~Tabel~\ref{tab:kalibrering-tab}
-% i Bilag~\ref{AppendixA}).
-
-\textit{Indhold tilføjes.}
-
-% ---------------------------------------------------------------------
-\section{Kendte fejlbilleder og afhjælpning}
-\label{sec:appC-fejlbilleder}
-
-% TODO: Liste over de fejlbilleder, der er observeret under
-% idriftsættelsen, og hvordan de afhjælpes:
-%  - "armen kører til forkert position" -> tjek by-path-mapping
-%  - "armen oscillerer" -> feedback_enabled må ikke stå til true
-%  - "ESP32 svarer ikke" -> tjek USB-forbindelse og strømforsyning
-
-\textit{Indhold tilføjes.}
+Forholdet er beskrevet i hovedteksten i kapitel~\ref{ch:idrift},
+og baggrunden for at flaget står på \enquote{false} står i samme
+kapitels afsnit om idriftsættelse.
 
 % ---------------------------------------------------------------------
-\section{Opdaterede README-filer}
-\label{sec:appC-readme}
+\clearpage
+\section{Stabil USB-portbinding -- konfigurationsændring}
+\label{sec:appB-portbinding}
 
-% TODO: De README-filer der er ændret/opdateret i workspace-pakkerne
-% som del af projektet. Indsæt enten som verbatim-blokke eller som
-% kort referat med markering af hvad der er ændret.
+Manager-noden er ændret, så de tre ESP32-kontrollere ikke længere
+adresseres via \enquote{/dev/ttyUSBx}, men via deres faste sti i
+\enquote{/dev/serial/by-path/}. Den enkelte kontroller bindes til
+sin port via stinavnet, der er knyttet til den fysiske USB-port og
+ikke til opstartsrækkefølgen. Et uddrag af konfigurationen er vist
+nedenfor:
 
-\textit{Indhold tilføjes.}
+\begin{verbatim}
+ServoControl(
+    port_path="/dev/serial/by-path/"
+              "platform-3610000.xhci-usb-0:2.2:1.0-port0",
+    label="venstre_arm",
+    config_file="servo_arm_left_params.json",
+)
+
+ServoControl(
+    port_path="/dev/serial/by-path/"
+              "platform-3610000.xhci-usb-0:2.3:1.0-port0",
+    label="hoejre_arm_og_hoved",
+    config_file="servo_arm_right_and_head_params.json",
+)
+
+ServoControl(
+    port_path="/dev/serial/by-path/"
+              "platform-3610000.xhci-usb-0:2.1:1.0-port0",
+    label="haender",
+    config_file="servo_hands_params.json",
+)
+\end{verbatim}
+
+Stierne svarer fysisk til de USB-porte på Jetson'en, der er mærket
+med rød, gul og hvid (jf.~kapitel~\ref{ch:el}). Mappingen mellem
+stier og kabelfarver står i Bilag~\ref{AppendixD},
+afsnit~\ref{sec:appC-portbinding}, sammen med proceduren for at
+finde stien for en ny enhed.

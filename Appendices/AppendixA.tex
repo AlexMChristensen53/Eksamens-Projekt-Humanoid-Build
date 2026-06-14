@@ -1,159 +1,63 @@
-% Appendix A -- Bilag
+% Appendix A -- Godkendt projektbeskrivelse
 
-\chapter{Målinger og fotos}
+\chapter{Godkendt projektbeskrivelse}
 \label{AppendixA}
 
-Dette bilag samler de tabeller, fotos og målegrafer, der er henvist
-til fra hovedteksten. Tabellerne er nummereret i den rækkefølge, de
-introduceres i rapporten.
+Den projektbeskrivelse, der ligger til grund for nærværende
+rapport, er gengivet nedenfor i den ordlyd, som blev godkendt ved
+projektets start (09.\,04.\,2026).
 
-\section{Tabel 1 -- Kalibreringsværdier for venstre arm}
-\label{tab:kalibrering}
+\section*{Begrundelse for valg af emne}
 
-Tabel~\ref{tab:kalibrering-tab} viser de kalibreringsværdier, der
-bruges ved opstart af manager-noden for venstre arm. Alle vinkler er
-angivet i grader. Kolonnen \textbf{Retning} angiver, om led og servo
-drejer samme vej ($+$) eller modsat ($-$). \textbf{Gear} er antallet
-af servo-omdrejninger pr.~led-omdrejning. \textbf{Min} og \textbf{Maks}
-er de software-grænser, manager-noden klipper kommandoer til,
-\textbf{Default} er leddets opstartsvinkel, og \textbf{Maks.\ hast.}
-er den højeste tilladte vinkelhastighed i grader pr.~sekund.
+Dette projekt er valgt med udgangspunkt i en konkret problemstilling
+stillet af Teknologisk Institut, hvor der arbejdes med udvikling og
+implementering af en humanoid robot baseret på eksisterende design
+og software.
 
-\begin{table}[H]
-\centering
-\caption{Kalibreringsværdier for de syv led i venstre arm. Den
-indbyggede positions-regulator i hver servo bruges direkte; ROS-laget
-regulerer ikke selv (jf.~kapitel~\ref{ch:idrift}).}
-\label{tab:kalibrering-tab}
-\begin{tabular}{lcccccc}
-\toprule
-\textbf{Led} & \textbf{ID} & \textbf{Retning} & \textbf{Gear} & \textbf{Min} & \textbf{Maks} & \textbf{Default} \\
-\midrule
-Skulder, pitch  & 7 & $+$ & 3 & 120 & 240 & 150 \\
-Skulder, roll   & 6 & $-$ & 3 & 120 & 230 & 180 \\
-Overarm, yaw    & 5 & $+$ & 3 & 120 & 230 & 180 \\
-Albue, pitch    & 4 & $+$ & 3 & 120 & 240 & 120 \\
-Underarm, yaw   & 3 & $+$ & 1 & 120 & 270 & 180 \\
-Håndled, pitch  & 2 & $+$ & 1 & 120 & 230 & 180 \\
-Håndled, roll   & 1 & $-$ & 1 & 120 & 230 & 180 \\
-\bottomrule
-\end{tabular}
-\end{table}
+Projektet har høj faglig relevans, da det kombinerer flere centrale
+discipliner inden for automationsteknologi, herunder mekanisk
+konstruktion, elektrisk integration samt styring af aktuatorer.
 
-\section{Tabel 2 -- Step-respons-resultater}
-\label{tab:stepresponse}
+\section*{Problemformulering}
 
-Step-respons er målt for hvert led ved at sende et fast vinkel-step
-fra leddets default-position og logge den feedback-vinkel,
-manager-noden publicerer (jf.~kapitel~\ref{ch:idrift}). \emph{Stigetid}
-er tiden, det tager den loggede vinkel at gå fra 10~\% til 90~\% af
-step-amplituden. \emph{Overshoot} er den procentvise overskridelse af
-målpositionen i forhold til step-amplituden. \emph{Indsvingningstid}
-er det tidspunkt, hvor vinklen første gang er inden for $\pm 2~\%$ af
-slutværdien og forbliver der. Resultaterne er sammenfattet i
-Tabel~\ref{tab:stepresponse-tab}.
+Hvordan kan en humanoid robot, baseret på eksisterende 3D-design og
+software, fremstilles, samles og integreres til en funktionel enhed,
+hvor mekaniske og elektriske systemer korrekt understøtter robottens
+bevægelser?
 
-\begin{table}[H]
-\centering
-\caption{Step-respons-metrikker pr.~led målt under idriftsættelsen.
-Råddata er gemt som CSV-filer, der ledsager rapporten.}
-\label{tab:stepresponse-tab}
-\begin{tabular}{lccc}
-\toprule
-\textbf{Led} & \textbf{Stigetid [s]} & \textbf{Overshoot [\%]} & \textbf{Indsvingning [s]} \\
-\midrule
-Skulder, pitch  & TODO & TODO & TODO \\
-Skulder, roll   & TODO & TODO & TODO \\
-Overarm, yaw    & TODO & TODO & TODO \\
-Albue, pitch    & TODO & TODO & TODO \\
-Underarm, yaw   & TODO & TODO & TODO \\
-Håndled, pitch  & TODO & TODO & TODO \\
-Håndled, roll   & TODO & TODO & TODO \\
-\bottomrule
-\end{tabular}
-\end{table}
+Projektet omfatter:
 
-\section{Tabel 3 -- Komponentliste}
-\label{tab:komponenter}
+\begin{itemize}
+    \item 3D-print og efterbehandling af robottens komponenter
+    \item Mekanisk samling af robottens delsystemer
+    \item Elektrisk opbygning og korrekt wiring af aktuatorer og
+          styresystem
+    \item Integration og afprøvning af eksisterende software
+\end{itemize}
 
-Den fulde komponentliste fremgår af kapitel~\ref{ch:el}
-(Tabel~\ref{tab:komponenter-venstre-arm}) og gengives her som
-hurtig opslagsreference.
+Der arbejdes med at sikre korrekt samspil mellem systemets
+delkomponenter samt mulighed for tilpasning og optimering af
+udvalgte komponenter og styring med henblik på at forbedre
+funktionalitet og stabilitet.
 
-\begin{table}[H]
-\centering
-\caption{Komponentoversigt for venstre-arm-opsætningen.}
-\renewcommand{\arraystretch}{1.2}
-\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.36\textwidth}
-                  c
-                  >{\raggedright\arraybackslash}p{0.46\textwidth}@{}}
-\toprule
-\textbf{Komponent} & \textbf{Antal} & \textbf{Kommentar} \\
-\midrule
-Waveshare ST3215-servo        & 7 & 12\,V, ID 1--7. \\
-Waveshare SC09-servo          & 5 & 5\,V, håndens fem fingre. \\
-ESP32-baseret USB-bridge      & 1 & USB til servobus. \\
-Mean Well DDR-120             & 1 & DC-DC-omformer, 12\,V til ST3215. \\
-Chinfa DRD15 13.5W            & 1 & DC-DC-omformer, 5\,V til SC09. \\
-RS Pro 264V 120W              & 1 & Hovedforsyning, 120\,W. \\
-Siemens Sentron 8A            & 2 & Sikringer på 12\,V- og 5\,V-skinnen. \\
-Jetson Orin Nano              & 1 & ROS\,2-host. \\
-\bottomrule
-\end{tabular}
-\end{table}
+\clearpage
+\section*{Afgrænsning}
 
-\section{Figur 1 -- Step-respons for skulderens pitch-led}
-\label{fig:stepresponse}
+Projektet afgrænses til at fokusere på udvikling, fremstilling og
+integration af en humanoid robotarm som et selvstændigt delsystem.
 
-Figur~\ref{fig:stepresponse-fig} viser et repræsentativt
-step-respons-forløb for skulderens pitch-led. Den blå kurve er den
-kommanderede vinkel som step-funktion, og den orange kurve er den
-loggede feedback-vinkel. De beregnede metrikker fra
-Tabel~\ref{tab:stepresponse-tab} er markeret direkte på plottet.
+Robotarmen er valgt som fokusområde, da den indeholder centrale
+mekaniske og styringsmæssige udfordringer, herunder bevægelse i
+flere led, belastning af komponenter samt koordinering af aktuatorer.
 
-\begin{figure}[H]
-\centering
-% \includegraphics[width=0.8\textwidth]{Figures/step_response_shoulder_pitch.pdf}
-\caption{Step-respons for skulderens pitch-led ved et step på
-$\Delta\theta = $ TODO$^{\circ}$. Målt under idriftsættelsen.}
-\label{fig:stepresponse-fig}
-\end{figure}
+Projektet vil derfor ikke nødvendigvis omfatte en fuld
+færdiggørelse af hele den humanoide robot, men der arbejdes med en
+modulær tilgang.
 
-\section{Foto-bilag}
-\label{sec:fotos}
+\section*{Målgruppe}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.7\textwidth]{IMG20260610181449.jpg}
-\caption{USB-portene på Jetson'en mærket efter kabelfarverne på de
-tilsluttede ESP32-kontrollere.}
-\end{figure}
+Projektet henvender sig primært til teknikere og fagpersoner inden
+for automation og robotteknologi, som arbejder med opbygning,
+integration og idriftsættelse af robotsystemer.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.7\textwidth]{IMG20260613210205.jpg}
-\caption{Venstre arm i neutral pose, hvor alle led står på deres
-default-vinkel fra Tabel~\ref{tab:kalibrering-tab}.}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.7\textwidth]{IMG20260613210227.jpg}
-\caption{Venstre arm i strakt pose som brugt under afprøvning af de
-mekaniske grænser.}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.7\textwidth]{IMG20260610181453.jpg}
-\caption{ESP32-kontrolleren mærket med hvidt kabel, der driver
-hændernes SC09-servoer.}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-% TODO: skærmbillede af Launcher-GUI tages 15/6.
-% \includegraphics[width=0.7\textwidth]{launcher_gui.png}
-\caption{Launcher-GUI under demo. Service-knapper er placeret øverst,
-og animations-fanen findes nederst.}
-\end{figure}
+Fokus er på en praktisk og teknisk formidling.

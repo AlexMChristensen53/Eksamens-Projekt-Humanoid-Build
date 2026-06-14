@@ -1,92 +1,115 @@
-% Appendix B -- Kode-dokumentation
+% Appendix B -- Bilag
 
-\chapter{Kode-dokumentation}
+\chapter{Konfiguration og fotos}
 \label{AppendixB}
 
-Dette bilag samler den dokumentation, der knytter sig direkte til den
-software og de konfigurationer, som er udviklet eller ændret i
-forbindelse med projektet. Hovedteksten henviser til de relevante
-afsnit i dette bilag i stedet for at gengive kode og konfigurationer
-i fuld længde.
+Dette bilag samler de tabeller og fotos, der er henvist til fra
+hovedteksten. Tabellerne er nummereret i den rækkefølge, de
+introduceres i rapporten.
 
-% ---------------------------------------------------------------------
-\section{Manager-noden}
-\label{sec:appB-manager}
+\section{Tabel 1 -- Kalibreringsværdier for venstre arm}
+\label{tab:kalibrering}
 
-% TODO: Beskrivelse af wattson_servo_manager_node:
-%  - hvilke ROS-topics den lytter på og publicerer
-%  - hvilke services den eksponerer
-%  - hvordan JSON-konfigurationen indlæses ved opstart
-%  - hvordan kommandoer videresendes til ESP32-kontrolleren
-% Indsæt evt. relevant kodeuddrag i \begin{verbatim} ... \end{verbatim}.
+Tabel~\ref{tab:kalibrering-tab} viser de kalibreringsværdier, der
+bruges ved opstart af manager-noden for venstre arm. Alle vinkler er
+angivet i grader. Kolonnen \textbf{Retning} angiver, om led og servo
+drejer samme vej ($+$) eller modsat ($-$). \textbf{Gear} er antallet
+af servo-omdrejninger pr.~led-omdrejning. \textbf{Min} og \textbf{Maks}
+er de software-grænser, manager-noden klipper kommandoer til,
+\textbf{Default} er leddets opstartsvinkel, og \textbf{Maks.\ hast.}
+er den højeste tilladte vinkelhastighed i grader pr.~sekund.
 
-\textit{Indhold tilføjes -- se README og kildekode i workspace.}
+\begin{table}[H]
+\centering
+\caption{Kalibreringsværdier for de syv led i venstre arm. Den
+indbyggede positions-regulator i hver servo bruges direkte; ROS-laget
+regulerer ikke selv (jf.~kapitel~\ref{ch:idrift}).}
+\label{tab:kalibrering-tab}
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{Led} & \textbf{ID} & \textbf{Retning} & \textbf{Gear} & \textbf{Min} & \textbf{Maks} & \textbf{Default} & \textbf{Maks.\ hast.} \\
+\midrule
+Skulder, pitch  & 7 & $+$ & 3 & 120 & 240 & 150 & 100 \\
+Skulder, roll   & 6 & $-$ & 3 & 120 & 230 & 180 & 100 \\
+Overarm, yaw    & 5 & $+$ & 3 & 120 & 230 & 180 & 100 \\
+Albue, pitch    & 4 & $+$ & 3 & 120 & 240 & 120 & 100 \\
+Underarm, yaw   & 3 & $+$ & 1 & 120 & 270 & 180 & 150 \\
+Håndled, pitch  & 2 & $+$ & 1 & 120 & 230 & 180 & 150 \\
+Håndled, roll   & 1 & $-$ & 1 & 120 & 230 & 180 & 150 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-% ---------------------------------------------------------------------
-\section{JSON-konfiguration: servo\_arm\_left\_params.json}
-\label{sec:appB-json}
+\section{Tabel 2 -- Komponentliste}
+\label{tab:komponenter}
 
-% TODO: Beskrivelse af JSON-strukturen:
-%  - hvilke nøgler hver servo-post har (servo_id, gear_ratio, gain_P,
-%    gain_I, gain_D, min/max, default, feedback_enabled)
-%  - hvilke værdier der er ændret i projektet og hvorfor
-%  - eksempel-snippet med én servo-post
+Den fulde komponentliste fremgår af kapitel~\ref{ch:el}
+(Tabel~\ref{tab:komponenter-venstre-arm}) og gengives her som
+hurtig opslagsreference.
 
-\textit{Indhold tilføjes.}
+\begin{table}[H]
+\centering
+\caption{Komponentoversigt for venstre-arm-opsætningen.}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.36\textwidth}
+                  c
+                  >{\raggedright\arraybackslash}p{0.46\textwidth}@{}}
+\toprule
+\textbf{Komponent} & \textbf{Antal} & \textbf{Kommentar} \\
+\midrule
+Waveshare ST3215-servo        & 7 & 12\,V, ID 1--7. \\
+Waveshare SC09-servo          & 5 & 5\,V, håndens fem fingre. \\
+ESP32-baseret USB-bridge      & 1 & USB til servobus. \\
+Mean Well DDR-120             & 1 & DC-DC-omformer, 12\,V til ST3215. \\
+Chinfa DRD15 13.5W            & 1 & DC-DC-omformer, 5\,V til SC09. \\
+RS Pro 264V 120W              & 1 & Hovedforsyning, 120\,W. \\
+Siemens Sentron 8A            & 2 & Sikringer på 12\,V- og 5\,V-skinnen. \\
+Jetson Orin Nano              & 1 & ROS\,2-host. \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-% ---------------------------------------------------------------------
-\section{Driver: DriverWaveshare}
-\label{sec:appB-driver}
+\section{Foto-bilag}
+\label{sec:fotos}
 
-% TODO: Kort beskrivelse af driver-klassen:
-%  - hvilken rolle den spiller mellem manager-noden og ESP32
-%  - hvilke metoder der er væsentlige (særligt instans-defaults
-%    for feedback_enabled, jf. kapitel~\ref{ch:idrift})
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{IMG20260610181449.jpg}
+\caption{USB-portene på Jetson'en mærket efter kabelfarverne på de
+tilsluttede ESP32-kontrollere.}
+\end{figure}
 
-\textit{Indhold tilføjes.}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{IMG20260613210205.jpg}
+\caption{Venstre arm i neutral pose, hvor alle led står på deres
+default-vinkel fra Tabel~\ref{tab:kalibrering-tab}.}
+\end{figure}
 
-% ---------------------------------------------------------------------
-\section{ServoControl.compute\_command og feedback\_enabled-gating}
-\label{sec:appB-feedback}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{IMG20260613210227.jpg}
+\caption{Venstre arm i strakt pose som brugt under afprøvning af de
+mekaniske grænser.}
+\end{figure}
 
-% TODO: Dokumentation af den tre-niveau-gating, der er beskrevet i
-% kapitel~\ref{ch:idrift}:
-%  1) feedback_enabled i JSON-konfigurationen
-%  2) instans-default i DriverWaveshare
-%  3) effekt i ServoControl.compute_command (cachet position vs. målt)
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{IMG20260610181453.jpg}
+\caption{ESP32-kontrolleren mærket med hvidt kabel, der driver
+hændernes SC09-servoer.}
+\end{figure}
 
-\textit{Indhold tilføjes.}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{Launcher_GUI_Bringup.png}
+\caption{Launcher-GUI under demo, bringup-fanen med start/stop-knapper
+til de typiske demo-services og statusindikatorer pr.~service.}
+\end{figure}
 
-% ---------------------------------------------------------------------
-\section{step\_response\_node}
-\label{sec:appB-step}
-
-% TODO: Beskrivelse af step_response_node:
-%  - formål (logging af feedback-vinkel ved fast step)
-%  - hvilke topics den lytter på/publicerer
-%  - output-format (CSV) og parametre (step-amplitude, varighed)
-
-\textit{Indhold tilføjes.}
-
-% ---------------------------------------------------------------------
-\section{Launcher-GUI}
-\label{sec:appB-gui}
-
-% TODO: Dokumentation af launcher-GUI'en:
-%  - hvilke service-knapper og animationsfunktioner den indeholder
-%  - hvordan den startes (slider_control.launch.py el.l.)
-%  - skærmbillede kan suppleres i AppendixA-foto-afsnittet
-
-\textit{Indhold tilføjes.}
-
-% ---------------------------------------------------------------------
-\section{Stabil USB-portbinding -- konfigurationsændring}
-\label{sec:appB-portbinding}
-
-% TODO: Den faktiske konfigurationsfil eller kode-diff, der binder
-% manager-noden mod /dev/serial/by-path/ frem for /dev/ttyUSBx.
-% Dokumentationen er beskrevet i hovedteksten i
-% kapitel~\ref{ch:el}, afsnit~\ref{sec:usb-binding};
-% selve filændringen hører hjemme her.
-
-\textit{Indhold tilføjes.}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{Launcher_GUI_Animations.png}
+\caption{Launcher-GUI under demo, animations-fanen hvor
+forhåndsindspillede sekvenser kan vælges og afspilles.}
+\end{figure}

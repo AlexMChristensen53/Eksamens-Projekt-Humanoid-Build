@@ -43,14 +43,21 @@ headsepline, % Uncomment to get a line under the header
 
 \usepackage{mathpazo} % Use the Palatino font by default
 
-\usepackage[backend=bibtex,style=authoryear,natbib=true]{biblatex} % Use the bibtex backend with the authoryear citation style (which resembles APA)
+\usepackage[backend=bibtex,style=numeric,sorting=nyt]{biblatex} % Numerisk stil -- liste uden \u00e5rstal i parentes
 
-\addbibresource{example.bib} % The filename of the bibliography
+\addbibresource{references.bib} % The filename of the bibliography
+
+% --- Bibliografi: l\u00e6sbarhed ---
+\usepackage{xurl} % tillader linjebrud i URL'er ved alle tegn
+\setlength{\bibitemsep}{0.6em} % luft mellem poster
+\setlength{\bibhang}{1.5em}    % h\u00e6ngende indrykning
+\renewcommand*{\UrlFont}{\rmfamily\itshape} % URL'er i normal kursiv i stedet for typewriter
 
 \usepackage[autostyle=false,style=english]{csquotes} % \enquote{} bruger engelske "to-oppe"-anførselstegn
 
 \usepackage{float} % giver [H]-placering for tabeller og figurer
 \usepackage{wrapfig} % giver tekst flydende rundt om figurer
+\usepackage[titletoc]{appendix} % "Bilag A" foran appendix-kapitler i indholdsfortegnelsen
 
 \graphicspath{{Figures/}{Pictures/}{./}}
 
@@ -177,7 +184,8 @@ headsepline, % Uncomment to get a line under the header
 
 \vfill
 
-{\large 15.\ juni 2026}\\[4cm]
+{\large 15.\ juni 2026}\\[0.5cm]
+{\normalsize Antal tegn: 42.047}\\[4cm]
 
 \vfill
 \end{center}
@@ -219,19 +227,21 @@ headsepline, % Uncomment to get a line under the header
 %	THESIS CONTENT - APPENDICES
 %----------------------------------------------------------------------------------------
 
-\appendix % Cue to tell LaTeX that the following "chapters" are Appendices
-
 % Include the appendices of the thesis as separate files from the Appendices folder
 % Uncomment the lines as you write the Appendices
 
+\begin{appendices}
 \include{Appendices/AppendixA}
 \include{Appendices/AppendixB}
 \include{Appendices/AppendixC}
+\include{Appendices/AppendixD}
+\end{appendices}
 
 %----------------------------------------------------------------------------------------
 %	BIBLIOGRAPHY
 %----------------------------------------------------------------------------------------
 
+\nocite{*} % medtag alle poster fra references.bib, også dem der ikke er citeret
 \printbibliography[heading=bibintoc]
 
 %----------------------------------------------------------------------------------------

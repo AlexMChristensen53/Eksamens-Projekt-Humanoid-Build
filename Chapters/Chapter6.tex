@@ -70,6 +70,7 @@ først tager fat i sit endestop uden at trække i mekanikken.
 Nul-positionen er sat til en neutral pose, hvor armen hænger lodret
 langs torsoens side. Værdierne for venstre arm står i Bilag, Tabel~1.
 
+\clearpage
 \section{Tilføjelser: commissioning-værktøjer}
 \label{sec:commissioning-vaerktoejer}
 
@@ -84,22 +85,30 @@ der derfor udviklet en ny ROS-pakke, \enquote{arm\_commissioning},
 med følgende noder:
 
 \begin{description}
-    \item[\enquote{step\_response\_node}] Sender en step-kommando
-        til et valgt led, logger den vinkel manager-noden publicerer
-        på \enquote{/joint\_states\_feedback}, og beregner klassiske
-        step-respons-mål: rise time (10\,\%--90\,\%), overshoot,
-        settling time og steady-state-fejl. Output er CSV-rådata og
-        en PNG-graf pr.~kørsel.
-    \item[\enquote{repeatability\_node}] Sender armen frem og
-        tilbage mellem to konfigurerede positioner et antal gange
-        og registrerer den publicerede vinkel i hvert hold-vindue.
-        Output er et histogram for de to pose-populationer plus
-        middelværdi, spredning og maks-afvigelse.
-    \item[\enquote{launcher\_gui\_node}] Et Tk-baseret
-        betjeningspanel, der samler de typiske demo-services (DHCP,
-        kameraets ROS-launch, VR-broer, servo-manager,
+    \item[\enquote{step\_response\_node}] Bruges til at måle, hvor
+        hurtigt og hvor præcist et led når frem til en ny position.
+        Noden kommanderer leddet til en ny position og logger
+        undervejs den tilbagemeldte vinkel fra manager-noden.
+        Ud fra forløbet beregnes stigetid, overshoot,
+        indsvingningstid og steady-state-fejl, og resultaterne
+        gemmes som en CSV-fil og en graf for hver kørsel. Noden
+        kræver, at manager-noden sender feedback-vinklen ud --
+        i den endelige konfiguration er denne udsendelse
+        midlertidigt slået fra af stabilitetshensyn
+        (jf.~afsnit~\ref{sec:hvad-maaler-vi}).
+    \item[\enquote{repeatability\_node}] Bruges til at undersøge,
+        om leddet rammer den samme vinkel hver gang. Noden kører
+        leddet frem og tilbage mellem to faste positioner et
+        antal gange og noterer den tilbagemeldte vinkel hver
+        gang armen står stille. Resultatet er et histogram plus
+        middelværdi, spredning og største afvigelse for de to
+        positioner. Den har samme krav til feedback-vinklen som
+        \enquote{step\_response\_node}.
+    \item[\enquote{launcher\_gui\_node}] Et grafisk
+        betjeningspanel, der samler de typiske demo-services
+        (DHCP, kamera, VR-bro, servo-manager,
         animationsafspilning) bag start/stop-knapper med
-        statusindikatorer og samlede logfaner. Formålet er at
+        statusindikatorer og fælles log-faner. Formålet er at
         afløse en opstart, hvor 5--6 terminalvinduer ellers skal
         åbnes i en bestemt rækkefølge.
 \end{description}
@@ -111,19 +120,40 @@ manager-noden selv kender for hver servo. Det er den eneste nye
 afhængighed, commissioning-pakken tilføjer til det eksisterende
 system.
 
+\clearpage
 \section{Funktionstest: step-response pr.~led}
 
-Step-response køres på hvert af de syv led i venstre arm med samme
-parametre: et 10\textdegree{} step fra nul, 12\,s logging, 50\,Hz
-samplerate og en settling-tolerance på 10\,\% af step-amplituden.
+Til funktionstesten blev der udviklet en
+\enquote{step\_response\_node}, som kommanderer et valgt led til
+en ny position og logger den feedback-vinkel, manager-noden
+publicerer på \enquote{/joint\_states\_feedback}. Værktøjet er
+afprøvet på enkeltled, men en komplet måleserie på alle syv led
+blev ikke gennemført. Årsagen er dokumenteret nedenfor og er en
+del af projektets resultater.
 
-% TODO ALEX (efter lab): indføj de målte værdier i tabellen
-% (Bilag, Tabel~2) og det repræsentative plot (Bilag, Figur~1).
-Resultaterne pr.~led står i Bilag, Tabel~2. Et repræsentativt forløb
-for \enquote{joint\_left\_shoulder\_pitch} vises i Bilag, Figur~1
-med den kommanderede vinkel, den loggede vinkel og de beregnede mål
-annoteret direkte på plottet.
+\section{Hvorfor blev målingerne ikke gennemført?}
 
+Under idriftsættelsen blev en stabilitetsfejl observeret i
+manager-noden: når feedback-publish var slået til, kunne
+servobussen blive overbelastet, og kommandoerne til den fysiske
+servo blev klippet eller forsinket. Fejlen var ikke synlig på
+\enquote{/joint\_states} (kommando-strømmen), men kun på den
+fysiske bevægelse og i feedback-strømmen.
+
+Den valgte løsning var at deaktivere feedback-publishet i den
+løbende drift. Det stabiliserer bevægelsen, men har den
+sidekonsekvens, at den eksisterende
+\enquote{step\_response\_node} ikke kan logge data uden at man
+midlertidigt genaktiverer publishet -- netop dét, der trigger
+fejlen.
+
+En holdbar løsning er at flytte feedback-publishet til en separat
+lav-frekvent timer (fx 2--5\,Hz), der ikke konkurrerer med 100\,Hz
+kommando-strømmen om bus-tid. Dét ligger uden for projektets
+tidsramme og er beskrevet som videre arbejde i
+kapitel~\ref{ch:perspektivering}.
+
+\clearpage
 \section{Hvad værktøjerne måler -- og ikke måler}
 \label{sec:hvad-maaler-vi}
 
@@ -151,7 +181,7 @@ kommanderede vinkel -- ikke en målt værdi fra servoens encoder.
           \enquote{false}.
 \end{enumerate}
 
-De tre kodesteder er dokumenteret i Bilag~\ref{AppendixB},
+De tre kodesteder er dokumenteret i Bilag~\ref{AppendixC},
 afsnit~\ref{sec:appB-feedback}.
 
 Commissioning-værktøjerne siger derfor intet om ST3215-servoens
@@ -178,6 +208,24 @@ Rettelsen var at flytte oprettelsen af timeren til slutningen af
 \enquote{\_\_init\_\_}, så den først aktiveres, når nodens tilstand
 er klar.
 
+\clearpage
+\subsection{Øvrige mindre rettelser}
+
+Når GUI'en blev lukket, forsøgte den at stoppe en tjeneste, som
+krævede administrator-rettigheder. Det gav en rettighedsfejl, og
+vinduet hængte. Det blev løst ved at stoppe netop den tjeneste med
+de rette rettigheder og indpakke alle service-stop i
+fejlhåndtering, så GUI'en lukker rent uanset hvad.
+
+Der blev også forsøgt at hæve kontrol-frekvensen fra 10 til 50~Hz for at
+få jævnere bevægelser. Det virkede ikke. De 14 servoer deler en
+fælles servobus, og bussen kan simpelthen ikke nå at sende
+kommandoer ud til alle servoer hver 20~ms.
+
+Resultatet var ustabile bevægelser uden den ønskede gevinst, så
+forsøget blev rullet tilbage, og kontrolfrekvensen blev sat til
+10~Hz igen.
+
 \subsection{Adgangskode-prompts ved fjernlogin}
 
 Launches af ROS-noder på Jetsonen sker fra GUI'en via en krypteret
@@ -197,23 +245,6 @@ Løsningen består af to dele:
 
 Resultatet er, at password kun spørges én gang pr.~service og ikke
 én gang pr.~ROS-launch.
-
-\subsection{Øvrige mindre rettelser}
-
-Når GUI'en blev lukket, forsøgte den at stoppe en tjeneste, som
-krævede administrator-rettigheder. Det gav en rettighedsfejl, og
-vinduet hængte. Det blev løst ved at stoppe netop den tjeneste med
-de rette rettigheder og indpakke alle service-stop i
-fejlhåndtering, så GUI'en lukker rent uanset hvad.
-
-Der blev også forsøgt at hæve kontrol-frekvensen fra 10 til 50~Hz for at
-få jævnere bevægelser. Det virkede ikke. De 14 servoer deler en
-fælles servobus, og bussen kan simpelthen ikke nå at sende
-kommandoer ud til alle servoer hver 20~ms.
-
-Resultatet var ustabile bevægelser uden den ønskede gevinst, så
-forsøget blev rullet tilbage, og kontrolfrekvensen blev sat til
-10~Hz igen.
 
 \section{Resultat}
 

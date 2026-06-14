@@ -7,45 +7,46 @@
   {\normalfont\bfseries}{}{0pt}{}
 \titlespacing*{\paragraph}{0pt}{1.2em}{0.3em}
 
-Projektet stillede spørgsmålet om, hvordan en humanoid robotarm
+Projektet stillede spørgsmålet om, hvordan en humanoid robot
 baseret på et eksisterende 3D-design og softwarestak kan
 fremstilles, samles og integreres til en funktionel enhed med
-korrekt samspil mellem mekanik og elektrik.
-
-Konklusionen samler de svar, projektet har leveret, kapitel for
-kapitel.
+korrekt samspil mellem mekanik og elektrik. Jf.\ afgrænsningen er
+spørgsmålet besvaret på venstre arm som selvstændigt delsystem,
+hvor de centrale mekaniske og styringsmæssige udfordringer ligger,
+og hvor resultatet kan indgå i den samlede robot senere.
 
 \paragraph{Mekanisk fremstilling og samling.}
 Venstre arm er printet og samlet. Pasningerne mellem de printede
 dele krævede, at de blev kørt med den laghøjde, designet er tegnet
 til; med den rettelse passede delene uden manuel efterbearbejdning.
-Detaljer i kapitel~\ref{ch:mekanik}.
 
 \paragraph{Elektrisk integration.}
 Armen er forbundet til en ESP32-kontroller, der via USB taler med
 Jetson Orin Nano-hosten. Signal- og effektveje er adskilte,
 montagen er færdig og mærket, og portbindingen er gjort uafhængig
-af tilslutningsrækkefølgen. Detaljer i kapitel~\ref{ch:el}.
+af tilslutningsrækkefølgen.
 
 \paragraph{Software-integration og styring.}
 Armen kan styres led for led via slider-GUI'en og kan afspille
-forhåndsindspillede animations-sekvenser. Step-respons er kørt på
-alle syv led i venstre arm, og resultaterne står i bilaget med det
-forbehold, der er beskrevet i afsnit~\ref{sec:hvad-maaler-vi}.
-Detaljer i kapitel~\ref{ch:idrift}.
+forhåndsindspillede animations-sekvenser. Step-respons-værktøjet er
+udviklet og afprøvet på enkeltled. En komplet måleserie blev ikke
+gennemført, fordi idriftsættelsen afdækkede en stabilitetsfejl i
+manager-nodens feedback-publish, der måtte deaktiveres for at sikre
+stabil bevægelse i demoen. Forholdet er beskrevet i
+afsnit~\ref{sec:hvad-maaler-vi} og foreslået løst med en separat
+lav-frekvent feedback-timer.
 
 \paragraph{Tilføjelser til det oprindelige system.}
 Som del af projektet er der udviklet en commissioning-pakke med to
 noder til måling af armens bevægelse og en samlet betjenings-GUI
 til opstart og demo. En aflæsning af strømforbruget pr.~led blev
 påbegyndt, men er ikke leveret -- baggrunden står i
-kapitel~\ref{ch:diskussion}. Detaljer i kapitel~\ref{ch:idrift}.
+kapitel~\ref{ch:diskussion}.
 
 \paragraph{Samlet vurdering.}
-Problemformuleringens kerne -- at fremstille, samle og integrere
-armen til en funktionel enhed med korrekt samspil mellem mekanik og
-elektrik -- er besvaret. Armen fungerer og kan styres. De
-integrationsfejl, der blev fundet undervejs, er enten løst eller
-dokumenteret. Tilføjelserne gør det muligt at måle og demonstrere
-armens opførsel og at starte den samlede systemstak pålideligt.
+Armen fungerer og kan styres, og problemformuleringens kerne er
+dermed besvaret. De integrationsfejl, der blev fundet undervejs,
+er enten løst eller dokumenteret, og tilføjelserne gør det muligt
+at måle og demonstrere armens opførsel og at starte den samlede
+systemstak pålideligt.
 

@@ -2,8 +2,20 @@
 \chapter{Teori og baggrund}
 \label{ch:teori}
 
+% Lokal stil for \paragraph i dette kapitel: overskrift på egen linje
+\titleformat{\paragraph}[block]
+  {\normalfont\bfseries}{}{0pt}{}
+\titlespacing*{\paragraph}{0pt}{1.2em}{0.3em}
+
 % Mål: ca. 2.5--3 sider. Skal vise "central anvendt teori" jf. studieordning §4.
 % Hold det stramt og relevant for ÉN arm -- ikke et generelt robotik-kursus.
+
+Dette kapitel samler den baggrund, rapporten bygger videre på.
+Først beskrives den anvendelseskontekst, robotten oprindeligt er
+tegnet til, fordi den begrunder flere af de design- og
+komponentvalg, integrationen arbejder ud fra. Derefter
+introduceres seriebus-servoen som komponent, så de begreber, der
+bruges i de senere kapitler, er på plads.
 
 \section{Anvendelseskontekst}
 \label{sec:anvendelseskontekst}
@@ -47,23 +59,79 @@ integrationen arbejder ud fra:
 % senere kapitler faktisk bygger videre på. Det er ikke et generelt
 % kursus i regulering eller robotik.
 
+\clearpage
 \section{Seriebus-servoen som integrations-komponent}
-% Hvad er en "intelligent" servo (indbygget mikrocontroller, encoder,
-% intern regulator). Hvorfor det fra integratorens perspektiv er en sort
-% boks man sender positionskommandoer til. Konfiguration via gain_P/I/D
-% i JSON-filer nævnes som ydre interface -- ingen PID-teori udledes,
-% fordi rapporten ikke tuner regulatoren. Bruges i Kap.~\ref{ch:analyse}
-% og Kap.~\ref{ch:idrift}.
+\label{sec:teori-servo}
 
-\section{Kommunikation: USB-serial og ROS~2}
-% Halv-duplex TTL-bus mellem ESP32 og servoer, USB-CDC mellem Jetson og
-% ESP32. ROS~2 publish/subscribe-model i det omfang læseren skal kunne
-% følge node-diagrammet i Kap.~\ref{ch:analyse} og forstå control_frequency-
-% diskussionen i Kap.~\ref{ch:idrift}.
+En almindelig hobby-servo er en simpel motor: den får et signal,
+der svarer til en bestemt vinkel, og drejer sin aksel derhen. Den
+ved ikke selv, om den faktisk når frem.
 
+Den seriebus-servo, der bruges i Wattson-armen, er bygget
+anderledes. Den har en lille computer og en vinkelmåler indbygget,
+så den både kan måle, hvor den står, og selv styre motoren hen mod
+den ønskede vinkel. Flere servoer kan kobles på den samme ledning
+og adskilles ved et nummer (et ID), som hver servo har sit eget
+af.
+
+I praksis betyder det, at man fra ROS-laget bare sender en
+målvinkel og servoens ID afsted. Resten klarer servoen selv.
+Indstillinger som hvor blødt eller hvor hårdt servoen styrer mod
+målvinklen står i en konfigurationsfil. I den samme fil ligger
+også et felt, der fortæller hvor mange omdrejninger servoens aksel
+svarer til en omdrejning af selve leddet, så ROS-laget kan regne i
+led-vinkler i stedet for servo-vinkler.
+
+Selve teorien bag servoens regulering er ikke en del af projektet;
+indstillingerne er overtaget uændret fra Energinet. Begreberne
+nævnes igen, hvor de bruges i kapitel~\ref{ch:analyse} og
+kapitel~\ref{ch:idrift}.
+
+\section{ROS~2 som mellemlag}
+\label{sec:teori-kommunikation}
+
+ROS~2 er et softwarerammeværk, hvor styringen er delt op i små
+selvstændige programmer (kaldet \emph{noder}), der sender beskeder
+til hinanden gennem navngivne kanaler. To slags kanaler bruges
+her: \emph{topics}, hvor en node fx publicerer ledvinkler løbende,
+og andre noder kan lytte med, og \emph{services}, hvor en node
+beder en anden node gøre én bestemt ting (fx \enquote{start
+kameraet}). En af fordelene er, at man kan tilføje nye noder, der
+lytter med på en eksisterende strøm, uden at ændre i den oprindelige
+kode. Det udnyttes blandt andet i commissioning-pakken i
+kapitel~\ref{ch:idrift}.
+
+\clearpage
 \section{3D-print som konstruktionsmateriale}
-% Anisotropi (lag-retning vs. belastningsretning), backlash i printede
-% koblinger, kryb under konstant last, slid i bevægelige interfaces.
-% Direkte input til materialevalg i Kap.~\ref{ch:mekanik}, til
-% observationen af den faldende udstrakte arm i Kap.~\ref{ch:idrift}
-% og til diskussionen i Kap.~\ref{ch:diskussion}.
+\label{sec:teori-3dprint}
+
+Robottens dele er printet i PLA. Et 3D-print bygges op lag for
+lag, og det giver en del nogle egenskaber, der er værd at kende,
+fordi de optræder i de senere kapitler.
+
+\paragraph{Retningen er ikke ligegyldig.}
+Bindingen mellem lagene er svagere end materialet inden for det
+enkelte lag. En del er derfor stærkere på langs af lagene end på
+tværs af dem. To dele, der er printet ud fra den samme model, men
+vendt forskelligt under printet, kan ende med meget forskellig
+styrke. Det forklarer fx, hvorfor et tandhjul i et bevægeligt led
+godt kan knække, selv om materialet i sig selv er stærkt nok.
+Punktet behandles igen i kapitel~\ref{ch:mekanik}.
+
+\paragraph{PLA giver lidt efter over tid.}
+PLA er let at printe og stivt nok til de fleste formål, men under
+en konstant belastning hænger det langsomt en smule. Det er især
+mærkbart i en udstrakt arm, hvor vægten i håndleddet trækker nedad
+hele tiden. Det berører nogle af observationerne i
+kapitel~\ref{ch:idrift} og diskussionen i
+kapitel~\ref{ch:diskussion}.
+
+\paragraph{Print-indstillingerne er en del af designet.}
+Ud over selve modellen afhænger en printet del af, hvordan den er
+printet -- lag-tykkelse, antal vægge, hvor meget materiale der er
+indeni, og hvordan den vendes på pladen. To prints fra samme fil
+kan derfor godt opføre sig forskelligt, hvis indstillingerne
+ikke er de samme. Det betyder, at indstillingerne skal følge med
+modellen, hvis nogen anden senere skal printe samme del og få den
+til at passe ind. Det punkt rammer både fremstillings- og
+idriftsættelses-kapitlerne.
